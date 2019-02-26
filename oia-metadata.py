@@ -88,6 +88,7 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
     chunk_index = 0
     total_records = 0
 
+    resumptionToken = None
     if autoresume:
         try:
             resumptionToken = open(tokenfile, 'r').read()
@@ -109,9 +110,12 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             for rec in records:
                 json.dump(rec, fout)
                 fout.write('\n')
-        if resumptionToken is not None:
+        if resumptionToken:
             with open(tokenfile, 'w') as fout:
                 fout.write(resumptionToken)
+        else:
+            print('No resumption token, query finished')
+            return
 
         time.sleep(15)
 
