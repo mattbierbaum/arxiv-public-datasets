@@ -90,9 +90,9 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
 
     if autoresume:
         try:
-            resumptionToken = open(tokenfile).read()
+            resumptionToken = open(tokenfile, 'r').read()
         except Exception as e:
-            print("Can't autoresume, no tokenfile found '{}'".format(tokenfile))
+            print("No tokenfile found '{}'".format(tokenfile))
 
     while True:
         print('Index {:4d} | Records {:7d} | resumptionToken "{}"'.format(
@@ -109,8 +109,9 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             for rec in records:
                 json.dump(rec, fout)
                 fout.write('\n')
-        with open(tokenfile, 'w') as fout:
-            fout.write(resumptionToken)
+        if resumptionToken is not None:
+            with open(tokenfile, 'w') as fout:
+                fout.write(resumptionToken)
 
         time.sleep(15)
 
