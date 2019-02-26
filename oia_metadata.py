@@ -1,3 +1,15 @@
+"""
+oia_metadata.py
+
+authors: Matt Bierbaum and Colin Clement
+date: 2019-02-25
+
+Resources
+=========
+* http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm
+* https://arxiv.org/help/oa/index
+"""
+
 import json
 import time
 import datetime
