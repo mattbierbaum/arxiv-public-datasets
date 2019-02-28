@@ -106,5 +106,5 @@ venv.bak/
 # data
 *.json*
 *.pkl
-
+data/*.txt
 
