@@ -203,7 +203,7 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             print('No resumption token, query finished')
             return
 
-        time.sleep(11)  # OAI server usually requires a 10s wait
+        time.sleep(12)  # OAI server usually requires a 10s wait
 
 def load_metadata(infile):
     """
