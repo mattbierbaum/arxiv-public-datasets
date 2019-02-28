@@ -14,7 +14,9 @@ python oia_metadata.py data/<savefile>.json
 
 Notes
 =====
-The save file is not technically JSON, but individual streamed lines of JSON.
+The save file is not technically JSON, but individual streamed lines of JSON,
+each of which is compressed by gzip. Use the helper function load_metadata
+to be sure to open it without error.
 
 Resources
 =========
@@ -203,11 +205,12 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             print('No resumption token, query finished')
             return
 
-        time.sleep(11)  # OAI server usually requires a 10s wait
+        time.sleep(12)  # OAI server usually requires a 10s wait
 
 def load_metadata(infile):
     """
-    Load metadata saved by all_of_arxiv
+    Load metadata saved by all_of_arxiv, as a list of lines of gzip compressed
+    json.
 
     Parameters
     ----------
