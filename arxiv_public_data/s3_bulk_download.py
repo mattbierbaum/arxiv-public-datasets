@@ -11,9 +11,27 @@ Note that at the time of writing the ArXiv manifest, it contains 1.15 TB
 of PDFs, which would cost $103 to receive from AWS S3.
 
 see: https://arxiv.org/help/bulk_data_s3
+
+Usage
+-----
+
+Set OUTDIR as the directory where the text parsed from pdfs should be placed.
+Set TARDIR as the directory where the raw pdf tars should be placed.
+
+```
+import arxiv_public_data.s3_bulk_download as s3
+
+# Download manifest file (or load if already downloaded)
+manifest = s3.get_manifest()
+
+# Download tar files and convert pdf to text
+# Costs money! Will only download if it does not find files
+s3.download_and_pdf2text(manifest)
+```
 """
 
 import os
+import re
 import gzip
 import glob
 import shutil
@@ -26,7 +44,11 @@ import subprocess
 
 import xml.etree.ElementTree as ET
 
-OUTDIR = os.path.abspath('./data')
+# Location of text files extracted from PDFs
+OUTDIR = os.path.abspath('/pool0/arxiv/full-text')
+# Location of TAR files
+TARDIR = os.path.abspath('/pool0/arxiv/full-text/rawpdfs')
+
 CHUNK_SIZE = 2**20  # 1MB
 
 BUCKET_NAME = 'arxiv'
@@ -36,7 +58,8 @@ HEADERS = {'x-amz-request-payer': 'requester'}
 
 s3 = boto3.client('s3', region_name='us-east-1')
 
-def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False):
+def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False,
+                  dryrun=False):
     """
     Downloads filename from the ArXiv AWS S3 bucket, and returns streaming md5
     sum of the content
@@ -53,6 +76,8 @@ def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False):
         redownload : bool
             Look to see if file is already downloaded, and simply return md5sum
             if it it exists, unless redownload is True
+        dryrun : bool
+            If True, only print activity
     Returns
     -------
         md5sum : str
@@ -70,14 +95,18 @@ def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False):
             "Bucket": BUCKET_NAME, "Key": filename, "RequestPayer":'requester'
         }
     )
-    print('Requesting "{}"'.format(filename))
-    request = requests.get(url, stream=True)
-    response_iter = request.iter_content(chunk_size=chunk_size)
-    with gzip.open(outfile, 'wb') as fout:
-        for i, chunk in enumerate(response_iter):
-            fout.write(chunk)
-            md5.update(chunk)
-
+    if not dryrun:
+        print('Requesting "{}" (costs money!)'.format(filename))
+        request = requests.get(url, stream=True)
+        response_iter = request.iter_content(chunk_size=chunk_size)
+        print("\t Writing {}".format(outfile))
+        with gzip.open(outfile, 'wb') as fout:
+            for i, chunk in enumerate(response_iter):
+                fout.write(chunk)
+                md5.update(chunk)
+    else:
+        print('Requesting "{}" (free!)'.format(filename))
+        print("\t Writing {}".format(outfile))
     return md5.hexdigest()
 
 def parse_manifest(manifest):
@@ -101,58 +130,110 @@ def parse_manifest(manifest):
         for f in root.findall('file')
     ]
 
-def _download_tar(filename, md5_expected):
+def download_check_manifest_file(filename, md5_expected, savedir=TARDIR,
+                                 dryrun=False):
     """ Download filename, check its md5sum, and form the output path """
-    outname = os.path.join(OUTDIR, os.path.basename(filename)) + '.gz'
-    md5_downloaded = download_file(filename, outname)
+    outname = os.path.join(savedir, os.path.basename(filename)) + '.gz'
+    md5_downloaded = download_file(filename, outname, dryrun=dryrun)
     
-    if md5_expected != md5_downloaded:
-        msg = "MD5 '{}' does not match expected '{}' for file '{}'".format(
-            md5_downloaded, md5_expected, filename
-        )
-        raise AssertionError(msg)
+    if not dryrun:
+        if md5_expected != md5_downloaded:
+            msg = "MD5 '{}' does not match expected '{}' for file '{}'".format(
+                md5_downloaded, md5_expected, filename
+            )
+            raise AssertionError(msg)
 
     return outname
 
-def _call(cmd):
+def _call(cmd, dryrun=False):
     """ Spawn a subprocess and execute the string in cmd """
-    return subprocess.check_call(shlex.split(cmd))
+    if dryrun:
+        print(cmd)
+        return 0
+    else:
+        return subprocess.check_call(shlex.split(cmd))
 
-def download_tar_pdf2text(fileinfo):
+def _make_pathname(filename, savedir=OUTDIR):
+    """ 
+    Make filename path for text document, sorted like on arXiv servers.
+    Parameters
+    ----------
+        filename : str
+            string filename of arXiv article
+        (optional)
+        savedir : str
+            the directory in which to store the file
+    Returns
+    -------
+        pathname : str
+            pathname in which to store the article following
+            * Old ArXiv IDs: e.g. hep-ph0001001.txt returns
+                savedir/hep-ph/0001/hep-ph0001001.txt
+            * New ArXiv IDs: e.g. 1501.13851.txt returns
+                savedir/arxiv/1501/1501.13851.txt
+    """
+    basename = os.path.basename(filename)
+    fname = os.path.splitext(basename)[0]
+    if '.' in fname:  # new style ArXiv ID
+        yearmonth = fname.split('.')[0]
+        return os.path.join(savedir, 'arxiv', yearmonth, basename)
+    # old style ArXiv ID
+    cat, aid = re.split(r'(\d+)', fname)[:2]
+    yearmonth = aid[:4]
+    return os.path.join(savedir, cat, yearmonth, basename)
+
+def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False):
     """
     Download and process one of the tar files from the ArXiv manifest.
-    Download, unpack, and spawn the Docker image for converting pdf2text
+    Download, unpack, and spawn the Docker image for converting pdf2text.
+    It will only try to download the file if it does not already exist.
 
-    The tar file will be stored in OUTDIR/<fileinfo[filename]>(.tar) and the
+    The tar file will be stored in OUTDIR/<fileinfo[filename](tar)> and the
     resulting arXiv articles will be stored in the subdirectory
-    OUTDIR/<fileinfo[filename]>/*.txt
+    OUTDIR/arxiv/<yearmonth>/<aid>.txt for old style arXiv IDs and
+    OUTDIR/<category>/<yearmonth>/<aid>.txt for new style arXiv IDs.
 
     Parameters
     ----------
         fileinfo : dict
             dictionary of file information from parse_manifest
+        (optional)
+        savedir : str
+            directory in which to store saved tar files
+        outdir : str
+            directory in which to store processed text from pdfs
+        dryrun : bool
+            If True, only print activity
     """
     filename = fileinfo['filename']
     md5sum = fileinfo['md5sum']
 
     print('Processing tar "{}" ...'.format(filename))
-    outname = _download_tar(filename, md5sum)
-
-    tardir = os.path.join(OUTDIR, outname.split('.')[0])
-    if not os.path.exists(tardir):
-        _call('mkdir -p {}'.format(tardir))
-
+    outname = download_check_manifest_file(filename, md5sum, savedir,
+                                           dryrun=dryrun)
     # unpack tar file
-    _call('tar -C {} -xf {}'.format(tardir, outname))
-
-    # ArXiv tar file has one directory, move contents up to tardir
-    for fn in glob.glob('{}/*/*.pdf'.format(tardir)):
-        shutil.move(fn, tardir)
+    cmd = 'tar --one-top-level -C {} -xf {}'.format(savedir, outname)
+    _call(cmd, dryrun)
+    basename = os.path.splitext(os.path.basename(filename))[0]
+    pdfdir = os.path.join(savedir, basename, basename.split('_')[2])
 
     # Run docker image to convert pdfs in tardir into *.txt
-    _call('docker run --rm -v {}:/pdfs fulltext'.format(tardir))
-    # clean up expanded pdf files
-    _call('rm {}/*.pdf'.format(tardir))
+    _call('docker run --rm -v {}:/pdfs fulltext'.format(pdfdir), dryrun)
+
+    # move txt into final file structure
+    if dryrun:
+        txtfiles = [os.path.join(pdfdir, 'xxxx.xxxxx.pdf')]
+    else:
+        txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
+    mvfn = _make_pathname(txtfiles[0], outdir)
+    _call('mkdir -p {}'.format(os.path.dirname(mvfn)), dryrun)
+
+    for tf in txtfiles:
+        mvfn = _make_pathname(tf, outdir)
+        _call('mv {} {}'.format(tf, mvfn), dryrun)
+
+    # clean up pdfs
+    _call('rm -rf {}'.format(os.path.join(savedir, basename)), dryrun)
 
 def get_manifest(redownload=False):
     """ 
@@ -161,16 +242,33 @@ def get_manifest(redownload=False):
     ----------
         redownload : bool
             If true, forces redownload of manifest even if it exists
-
     Returns
     -------
         file_information : list of dicts
             each dict contains the file metadata
     """
-    manifest_file = os.path.join(OUTDIR, 'arxiv-manifest.xml.gz')
-    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload)
+    manifest_file = os.path.join(TARDIR, 'arxiv-manifest.xml.gz')
+    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload,
+                        dryrun=False)
     manifest = gzip.open(manifest_file, 'rb').read()
     return parse_manifest(manifest)
+
+def download_manifest_files(list_of_fileinfo, savedir=TARDIR, dryrun=False):
+    """
+    Download tar files from the ArXiv manifest and check that their MD5sums
+    match
+    Parameters
+    ----------
+        list_of_fileinfo : list
+            Some elements of results of get_manifest
+        savedir : str
+            Directory in which tar files will be saved
+        dryrun : bool
+            If True, only print activity
+    """
+    for fileinfo in list_of_fileinfo:
+        download_check_manifest_file(fileinfo['filename'], fileinfo['md5sum'],
+                                     savedir, dryrun)
 
 def download_and_process_manifest_files(list_of_fileinfo):
     """
@@ -181,4 +279,4 @@ def download_and_process_manifest_files(list_of_fileinfo):
         Some elements of results of get_manifest
     """
     for fileinfo in list_of_fileinfo:
-        download_tar_pdf2text(fileinfo)
+        download_and_pdf2text(fileinfo)
