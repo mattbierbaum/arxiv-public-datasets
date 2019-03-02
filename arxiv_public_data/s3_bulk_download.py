@@ -221,15 +221,12 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False)
     _call('docker run --rm -v {}:/pdfs fulltext'.format(pdfdir), dryrun)
 
     # move txt into final file structure
-    if dryrun:
-        txtfiles = [os.path.join(pdfdir, 'xxxx.xxxxx.pdf')]
-    else:
-        txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
-    mvfn = _make_pathname(txtfiles[0], outdir)
-    _call('mkdir -p {}'.format(os.path.dirname(mvfn)), dryrun)
-
+    txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
     for tf in txtfiles:
         mvfn = _make_pathname(tf, outdir)
+        dirname = os.path.dirname(mvfn)
+        if not os.path.exists(dirname):
+            _call('mkdir -p {}'.format(dirname, dryrun))
         _call('mv {} {}'.format(tf, mvfn), dryrun)
 
     # clean up pdfs
