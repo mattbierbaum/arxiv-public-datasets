@@ -34,13 +34,14 @@ import os
 import re
 import gzip
 import glob
-import shutil
 import shlex
 import boto3
 import hashlib
 import botocore
 import requests
 import subprocess 
+from functools import partial
+from multiprocessing import Pool
 
 import xml.etree.ElementTree as ET
 
@@ -258,6 +259,7 @@ def download_manifest_files(list_of_fileinfo, savedir=TARDIR, dryrun=False):
     ----------
         list_of_fileinfo : list
             Some elements of results of get_manifest
+        (optional)
         savedir : str
             Directory in which tar files will be saved
         dryrun : bool
@@ -267,13 +269,22 @@ def download_manifest_files(list_of_fileinfo, savedir=TARDIR, dryrun=False):
         download_check_manifest_file(fileinfo['filename'], fileinfo['md5sum'],
                                      savedir, dryrun)
 
-def download_and_process_manifest_files(list_of_fileinfo):
+def download_and_process_manifest_files(list_of_fileinfo, processes=8,
+                                        savedir=TARDIR, outdir=OUTDIR,
+                                        dryrun=False):
     """
     Download PDFs from the ArXiv AWS S3 bucket and convert each pdf to text
-    Parameters
+    Parameters. If files are already downloaded, it will only process them.
     ----------
-    list_of_fileinfo : list
-        Some elements of results of get_manifest
+        list_of_fileinfo : list
+            Some elements of results of get_manifest
+        (optional)
+        processes : int
+            number of paralell workers to spawn (roughly as many CPUs as you have)
+        dryrun : bool
+            If True, only print activity
     """
-    for fileinfo in list_of_fileinfo:
-        download_and_pdf2text(fileinfo)
+    pdf2text = partial(download_and_pdf2text, savedir=savedir, outdir=outdir,
+                       dryrun=dryrun)
+    pool = Pool(processes=processes)
+    pool.map(pdf2text, list_of_fileinfo)
