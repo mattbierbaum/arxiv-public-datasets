@@ -146,13 +146,15 @@ def download_check_manifest_file(filename, md5_expected, savedir=TARDIR,
 
     return outname
 
-def _call(cmd, dryrun=False):
+def _call(cmd, dryrun=False, debug=False):
     """ Spawn a subprocess and execute the string in cmd """
     if dryrun:
         print(cmd)
         return 0
     else:
-        return subprocess.check_call(shlex.split(cmd))
+        return subprocess.check_call(
+            shlex.split(cmd), stderr=None if debug else open(os.devnull, 'w')
+        )
 
 def _make_pathname(filename, savedir=OUTDIR):
     """ 
@@ -183,7 +185,8 @@ def _make_pathname(filename, savedir=OUTDIR):
     yearmonth = aid[:4]
     return os.path.join(savedir, cat, yearmonth, basename)
 
-def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False):
+def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
+                          debug=False):
     """
     Download and process one of the tar files from the ArXiv manifest.
     Download, unpack, and spawn the Docker image for converting pdf2text.
@@ -205,6 +208,8 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False)
             directory in which to store processed text from pdfs
         dryrun : bool
             If True, only print activity
+        debug : bool
+            Silence stderr of Docker _call if debug is False
     """
     filename = fileinfo['filename']
     md5sum = fileinfo['md5sum']
@@ -219,7 +224,7 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False)
     pdfdir = os.path.join(savedir, basename, basename.split('_')[2])
 
     # Run docker image to convert pdfs in tardir into *.txt
-    _call('docker run --rm -v {}:/pdfs fulltext'.format(pdfdir), dryrun)
+    _call('docker run --rm -v {}:/pdfs fulltext'.format(pdfdir), dryrun, debug)
 
     # move txt into final file structure
     txtfiles = glob.glob('{}/*.txt'.format(pdfdir))

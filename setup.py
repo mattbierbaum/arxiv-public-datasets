@@ -7,7 +7,7 @@ def read(fname):
 setup(name='arxiv_public_data',
       version='0.0.1',
       description='Download and process publicly available ArXiv data',
-      long_description=read('README'),
+      long_description=read('README.md'),
       keywords='data-mining citation-networks',
       url='',
       author='Matt Bierbaum and Colin Clement',
