@@ -45,13 +45,11 @@ https://docs.docker.com/install/linux/docker-ce/ubuntu/
 Next, we need the Python package and Dockerfile definition to create the image
 which we will be using to run the PDF conversion. It can be had by cloning:
 
-    git clone https://github.com/arXiv/arxiv-fulltext.git
-    git checkout develop
+    git clone https://github.com/mattbierbaum/arxiv-fulltext.git
+    git checkout stamp-removal
 
 Then, we can build the docker image by:
 
-    cd extractor
-    sed "s|CMD .*|CMD python3.6 /scripts/launch.py|g" Dockerfile > Dockerfile.all
     docker build -t fulltext -f Dockerfile.all .
 
 **Running the image** 
