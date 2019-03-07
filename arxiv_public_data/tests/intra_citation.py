@@ -3,11 +3,14 @@ itra_citation.py
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
+from collections import Counter
 from itertools import chain
 import networkx as nx
+import numpy as np
 import json
 import gzip
+
+from arxiv_public_data.oai_metadata import load_metadata
 
 def loaddata(fname='data/citations-internal.json.gz'):
     return json.load(gzip.open(fname, 'r'))
@@ -92,3 +95,16 @@ def plot_degree_distn(G, bins=None, numbins=50):
         axes.set_yscale('log')
         axes.set_ylabel('Counts')
         axes.set_xlabel('Degree')
+
+def category_bar_chart(categories):
+    count = Counter(categories)
+    sortcats = sorted(count.keys(), key=count.get)[::-1]
+    plt.bar(range(len(sortcats)), height=[count[c] for c in sortcats])
+    plt.xticks(range(len(sortcats)), sortcats, rotation=90)
+    plt.ylabel('Number of articles per category')
+    plt.tight_layout()
+    return plt.gcf(), plt.gca()
+
+
+if __name__ == '__main__':
+    metafile = 'data/arxiv-oai-metadata-2019-02-26.json.gz'

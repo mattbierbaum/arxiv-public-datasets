@@ -32,12 +32,14 @@ import requests
 import xml.etree.ElementTree as ET
 
 URL_ARXIV_OAI = 'https://export.arxiv.org/oai2'
+URL_CITESEER_OAI = 'http://citeseerx.ist.psu.edu/oai2'
 OAI_XML_NAMESPACES = {
     'OAI': 'http://www.openarchives.org/OAI/2.0/',
     'arXiv': 'http://arxiv.org/OAI/arXivRaw/'
 }
 
-def get_list_record_chunk(resumptionToken=None):
+def get_list_record_chunk(resumptionToken=None, harvest_url=URL_ARXIV_OAI,
+                          metadataPrefix='arXivRaw'):
     """
     Query OIA API for the metadata of 1000 Arxiv article
 
@@ -56,9 +58,9 @@ def get_list_record_chunk(resumptionToken=None):
     if resumptionToken:
         parameters['resumptionToken'] = resumptionToken
     else:
-        parameters['metadataPrefix'] = 'arXivRaw'
+        parameters['metadataPrefix'] = metadataPrefix
 
-    response = requests.get(URL_ARXIV_OAI, params=parameters)
+    response = requests.get(harvest_url, params=parameters)
 
     if response.status_code == 200:
         return response.text
