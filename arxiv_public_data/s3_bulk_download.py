@@ -185,6 +185,18 @@ def _make_pathname(filename, savedir=OUTDIR):
     yearmonth = aid[:4]
     return os.path.join(savedir, cat, yearmonth, basename)
 
+
+def _id_to_txtpath(aid, savedir=OUTDIR):
+    fname = aid
+    if '.' in aid:  # new style ArXiv ID
+        yearmonth = aid.split('.')[0]
+        return os.path.join(savedir, 'arxiv', yearmonth, fname)+'.txt'
+    # old style ArXiv ID
+    cat, aid = re.split(r'(\d+)', aid)[:2]
+    yearmonth = aid[:4]
+    return os.path.join(savedir, cat, yearmonth, fname)+'.txt'
+
+
 def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
                           debug=False, processes=1):
     """
@@ -214,8 +226,8 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
     filename = fileinfo['filename']
     md5sum = fileinfo['md5sum']
 
-    file0 = _make_pathname(fileinfo['first_item'], outdir)
-    file1 = _make_pathname(fileinfo['last_item'], outdir)
+    file0 = _id_to_txtpath(fileinfo['first_item'], outdir)
+    file1 = _id_to_txtpath(fileinfo['last_item'], outdir)
 
     if os.path.exists(file0) and os.path.exists(file1):
         print('Tar file appears processed, skipping {}...'.format(filename))
