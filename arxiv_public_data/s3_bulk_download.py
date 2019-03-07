@@ -293,3 +293,18 @@ def download_and_process_manifest_files(list_of_fileinfo, processes=8,
                        dryrun=dryrun)
     pool = Pool(processes=processes)
     pool.map(pdf2text, list_of_fileinfo)
+
+def check_if_any_processed(fileinfo, savedir=TARDIR, outdir=OUTDIR):
+    filename = fileinfo['filename']
+    first = _make_pathname(fileinfo['first_item']+'.txt', outdir)
+    last = _make_pathname(fileinfo['last_item']+'.txt', outdir)
+    return os.path.exists(first) and os.path.exists(last)
+    #outname = os.path.join(savedir, os.path.basename(filename)) + '.gz'
+    #cmd = 'tar -tf {}'.format(outname)
+    #result = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE).stdout
+    #files = result.decode().splitlines()[1:]
+    #for f in map(os.path.basename, files):
+    #    name, ext = os.path.splitext(f)
+    #    if os.path.exists(_make_pathname(name+'.txt', outdir)):
+    #        return True
+    #return False
