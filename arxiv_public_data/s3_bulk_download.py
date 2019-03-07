@@ -186,7 +186,7 @@ def _make_pathname(filename, savedir=OUTDIR):
     return os.path.join(savedir, cat, yearmonth, basename)
 
 def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
-                          debug=False):
+                          debug=False, processes=1):
     """
     Download and process one of the tar files from the ArXiv manifest.
     Download, unpack, and spawn the Docker image for converting pdf2text.
@@ -214,6 +214,13 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
     filename = fileinfo['filename']
     md5sum = fileinfo['md5sum']
 
+    file0 = _make_pathname(fileinfo['first_item'], outdir)
+    file1 = _make_pathname(fileinfo['last_item'], outdir)
+
+    if os.path.exists(file0) and os.path.exists(file1):
+        print('Tar file appears processed, skipping {}...'.format(filename))
+        return
+
     print('Processing tar "{}" ...'.format(filename))
     outname = download_check_manifest_file(filename, md5sum, savedir,
                                            dryrun=dryrun)
@@ -224,7 +231,7 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
     pdfdir = os.path.join(savedir, basename, basename.split('_')[2])
 
     # Run docker image to convert pdfs in tardir into *.txt
-    _call('docker run --rm -v {}:/pdfs fulltext'.format(pdfdir), dryrun, debug)
+    _call('docker run --rm -v {}:/pdfs fulltext {}'.format(pdfdir, processes), dryrun, debug)
 
     # move txt into final file structure
     txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
@@ -274,7 +281,7 @@ def download_manifest_files(list_of_fileinfo, savedir=TARDIR, dryrun=False):
         download_check_manifest_file(fileinfo['filename'], fileinfo['md5sum'],
                                      savedir, dryrun)
 
-def download_and_process_manifest_files(list_of_fileinfo, processes=8,
+def download_and_process_manifest_files(list_of_fileinfo, processes=1,
                                         savedir=TARDIR, outdir=OUTDIR,
                                         dryrun=False):
     """
@@ -289,7 +296,8 @@ def download_and_process_manifest_files(list_of_fileinfo, processes=8,
         dryrun : bool
             If True, only print activity
     """
-    pdf2text = partial(download_and_pdf2text, savedir=savedir, outdir=outdir,
-                       dryrun=dryrun)
-    pool = Pool(processes=processes)
-    pool.map(pdf2text, list_of_fileinfo)
+    for fileinfo in list_of_fileinfo:
+        download_and_pdf2text(
+                fileinfo, savedir=savedir, outdir=outdir,
+                dryrun=dryrun, processes=processes
+        )
