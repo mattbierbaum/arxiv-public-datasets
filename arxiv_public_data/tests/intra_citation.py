@@ -1,7 +1,7 @@
 """
 intra_citation.py
 
-author: Kevin O'Keeffe
+author: Colin Clement
 
 TODO
   x Num edges, num nodes
