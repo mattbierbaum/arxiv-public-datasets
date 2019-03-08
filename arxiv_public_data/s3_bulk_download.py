@@ -35,6 +35,7 @@ import re
 import gzip
 import glob
 import shlex
+import shutil
 import boto3
 import hashlib
 import botocore
@@ -253,7 +254,9 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
         dirname = os.path.dirname(mvfn)
         if not os.path.exists(dirname):
             _call('mkdir -p {}'.format(dirname, dryrun))
-        _call('mv {} {}'.format(tf, mvfn), dryrun)
+
+        if not dryrun:
+            shutil.move(tf, mvfn)
 
     # clean up pdfs
     _call('rm -rf {}'.format(os.path.join(savedir, basename)), dryrun)
