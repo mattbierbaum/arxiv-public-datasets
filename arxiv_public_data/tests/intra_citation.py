@@ -1,6 +1,8 @@
 """
 intra_citation.py
 
+author: Colin Clement
+
 TODO
   x Num edges, num nodes
   x Degree distribution
