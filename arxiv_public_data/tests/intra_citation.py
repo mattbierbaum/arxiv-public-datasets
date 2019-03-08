@@ -1,5 +1,14 @@
 """
-itra_citation.py
+intra_citation.py
+
+TODO
+  x Num edges, num nodes
+  x Degree distribution
+  * Clustering coefficient
+  * Average path length, network diameter
+  * Betweenness distribution, mean betweenness
+  * Connected components
+
 """
 
 import matplotlib.pyplot as plt
