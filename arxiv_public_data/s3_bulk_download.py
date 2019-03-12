@@ -322,3 +322,72 @@ def check_if_any_processed(fileinfo, savedir=TARDIR, outdir=OUTDIR):
     first = _make_pathname(fileinfo['first_item']+'.txt', outdir)
     last = _make_pathname(fileinfo['last_item']+'.txt', outdir)
     return os.path.exists(first) and os.path.exists(last)
+
+def generate_file_index(manifest, savedir=TARDIR, outdir=OUTDIR):
+    """
+    Go through the manifest and check that every PDF has a cooresponding txt
+    files. This is actully rather slow, so it is a separate function.
+
+    Returns
+    -------
+    index : dictionary
+        keys: tarfile, values: list of pdfs
+    """
+    out = {}
+
+    for fileinfo in manifest:
+        name = fileinfo['filename']
+        print("Indexing {}...".format(name))
+        tarname = os.path.join(savedir, os.path.basename(name))+'.gz'
+        files = [i for i in tarfile.open(tarname).getnames() if i.endswith('.pdf')]
+
+        out[name] = files
+    return out
+
+def check_file_index(index):
+    """
+    Use the index file to check which pdf->txt conversions are outstanding.
+    """
+    missing = defaultdict(list)
+    for tar, pdflist in index.items():
+        print("Checking {}...".format(tar))
+        for pdf in pdflist:
+            txt = _make_pathname(pdf).replace('.pdf', '.txt')
+
+            if not os.path.exists(txt):
+                missing[tar].append(pdf)
+
+    return missing
+
+def rerun_missing(tar, names, savedir=TARDIR,  outdir=OUTDIR, dryrun=False,
+        debug=False, processes=1):
+    outname = os.path.join(savedir, os.path.basename(tar)) + '.gz'
+    # unpack tar file
+    cmd = 'tar --one-top-level -C {} -xf {} {}'.format(savedir, outname, ' '.join(names))
+    _call(cmd, dryrun)
+    basename = os.path.splitext(os.path.basename(tar))[0]
+    pdfdir = os.path.join(savedir, basename, basename.split('_')[2])
+
+    # Run docker image to convert pdfs in tardir into *.txt
+    cmd = 'docker run --rm -v {}:/pdfs fulltext {}'.format(pdfdir, processes)
+    _call(cmd, dryrun, debug)
+
+    # move txt into final file structure
+    txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
+    for tf in txtfiles:
+        mvfn = _make_pathname(tf, outdir)
+        dirname = os.path.dirname(mvfn)
+        if not os.path.exists(dirname):
+            _call('mkdir -p {}'.format(dirname, dryrun))
+
+        if not dryrun:
+            shutil.move(tf, mvfn)
+
+    # clean up pdfs
+    _call('rm -rf {}'.format(os.path.join(savedir, basename)), dryrun)
+
+def rerun_missing_all(missing, processes=1):
+    sort = list(reversed(sorted([(k, v) for k, v in missing.items()], key=lambda x: len(x[1]))))
+    for tar, names in sort:
+        print("Running {} ({} to do)...".format(tar, len(names)))
+        rerun_missing(tar, names, processes=processes)
