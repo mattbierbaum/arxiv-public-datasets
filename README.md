@@ -19,6 +19,17 @@ Requirements:
 
 * python3 with pipenv
 
+**Run OAI metadata harvester**
+
+    python arxiv_public_data/oai_metadata.py [OPTIONAL filepath.json.gz]
+
+This will download the entire ArXiv metadata set, saving it as a series of 
+gzip-compressed JSON entries. The default save location is
+`./data/arxiv-metadata-oai-<date>.json.gz`. This process will take at least 6
+hours, as the OAI server only sends 1000 entries every 15 seconds. A resumption
+token is saved, so the process can be restarted by running again with the same
+filename input.
+
 ## PDFs
 
 Requirements:
