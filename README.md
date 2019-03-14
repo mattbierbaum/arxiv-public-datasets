@@ -41,7 +41,7 @@ Requirements:
 **Bulk download of ArXiv PDFs**
 
 This download costs about $100 (and is 1.1TB) at the time of writing, as the 
-(ArXiv bulk download)[https://arxiv.org/help/bulk_data] only allows
+[ArXiv bulk download](https://arxiv.org/help/bulk_data) only allows
 requester-pays AWS S3 downloads. Set the `savedir` keyword arguments of
 `get_manifest` and `download_manifest_files` to set where the files will be
 saved, and be sure you have over 1TB of space in that location. The following
