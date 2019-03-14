@@ -261,7 +261,7 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
     # clean up pdfs
     _call('rm -rf {}'.format(os.path.join(savedir, basename)), dryrun)
 
-def get_manifest(redownload=False):
+def get_manifest(savedir=TARDIR, redownload=False):
     """ 
     Get the file manifest for the ArXiv
     Parameters
@@ -273,7 +273,7 @@ def get_manifest(redownload=False):
         file_information : list of dicts
             each dict contains the file metadata
     """
-    manifest_file = os.path.join(TARDIR, 'arxiv-manifest.xml.gz')
+    manifest_file = os.path.join(savedir, 'arxiv-manifest.xml.gz')
     md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload,
                         dryrun=False)
     manifest = gzip.open(manifest_file, 'rb').read()
