@@ -24,6 +24,7 @@ Resources
 * https://arxiv.org/help/oa/index
 """
 
+import os
 import gzip
 import json
 import time
@@ -174,7 +175,10 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             <outfile>-resumptionToken.txt
     """
     date = str(datetime.datetime.now()).split(' ')[0]
-    outfile = outfile or './arxiv-metadata-oai-{}.json.gz'.format(date)
+    outfile = outfile or './data/arxiv-metadata-oai-{}.json.gz'.format(date)
+    directory = os.path.split(outfile)[0]
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
     tokenfile = '{}-resumptionToken.txt'.format(outfile)
     chunk_index = 0
     total_records = 0
