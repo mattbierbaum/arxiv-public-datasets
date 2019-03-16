@@ -43,7 +43,7 @@ def format_cat(name):
     if '/' in name:  # OLD ID, names contains subcategory 
         catsubcat, aid = name.split('/')
         cat = catsubcat.split('.')[0] 
-        return ra.dashdict.get(cat, cat) + "/" + aid
+        return dashdict.get(cat, cat) + "/" + aid
     else:
         return name
 
