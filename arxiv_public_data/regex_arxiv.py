@@ -31,22 +31,57 @@ __all__ = (
     'REGEX_ARXIV_FLEXIBLE'
 )
 
+dashdict = {c.replace('-', ''): c for c in CATEGORIES if '-' in c}
+dashdict.update({c.replace('-', ''): c for c in SUB_CATEGORIES if '-' in c})
+
+def strip_version(name):
+    """ 1501.21981v1 -> 1501.21981 """
+    return name.split('v')[0]
+
+def format_cat(name):
+    """ Strip subcategory, add hyphen to category name if missing """
+    if '/' in name:  # OLD ID, names contains subcategory 
+        catsubcat, aid = name.split('/')
+        cat = catsubcat.split('.')[0] 
+        return ra.dashdict.get(cat, cat) + "/" + aid
+    else:
+        return name
+
+def zeropad_1501(name):
+    """ Arxiv IDs after yymm=1501 are padded to 5 zeros """
+    if not '/' in name:  # new ID
+        yymm, num = name.split('.')
+        if int(yymm) > 1500 and len(num) < 5:
+            return yymm + ".0" + num
+    return name
+
+def clean(name):
+    """ Correct common errors in ArXiv IDs to improve matching """
+    funcs = [strip_version, format_cat, zeropad_1501]
+    for func in funcs:
+        name = func(name)
+    return name
 
 # A common typo is to exclude the hyphen in the category.
-categories = CATEGORIES + [cat.replace('-', '') for cat in CATEGORIES]
-subcategories = SUB_CATEGORIES + [cat.replace('-', '') for cat in SUB_CATEGORIES]
+categories = list(set(CATEGORIES + [cat.replace('-', '') for cat in
+                                    CATEGORIES]))
+subcategories = list(set(SUB_CATEGORIES + [cat.replace('-', '') for cat in
+                                           SUB_CATEGORIES]))
 
 #  capture possible minor categories
 RE_CATEGORIES = r'(?:{})(?:(?:[.][A-Z]{{2}})|(?:{}))?'.format(
     r'|'.join(categories), r'|'.join(subcategories)
 )
 
-RE_DATE = r'(?<!\d)[0-9]{2}(?:0[1-9]|1[0-2])'
+# valid YYMM date, NOT preceded by any digits
+# NOTE: at the date of writing, it is 2019, so we do not allow
+# proper dates for YY 20 or larger
+RE_DATE = r'(?<![\d.])(?:[0-1][0-9])(?:0[1-9]|1[0-2])'
 RE_VERSION = r'(?:[vV][1-9]\d*)?'
 
 # =============================================================================
-RE_NUM_NEW = RE_DATE + r'(?:[.]\d{4,5})' + RE_VERSION
-RE_NUM_OLD = RE_DATE + r'(?:\d{3})' + RE_VERSION
+RE_NUM_NEW = RE_DATE + r'(?:[.]\d{4,5})(?![\d.])' + RE_VERSION
+RE_NUM_OLD = RE_DATE + r'(?:\d{3})(?![\d.])' + RE_VERSION
 
 # matches: 1612.00001 1203.0023v2
 RE_ID_NEW = r'(?:{})'.format(RE_NUM_NEW)
@@ -149,5 +184,6 @@ TEST_NEGATIVE = [
     'Distribution. In: 1404.2485v3 (2015)',
     '113005 (2013), 1307.4331,',
     'doi: 10.1145/ 321105.321114 ',
+    'doi: 10.1145/ 1105.321114 ',
     'scalar quantum 1610.07877v1'
 ]
