@@ -1,12 +1,28 @@
-"""RegEx patterns for arXiv identifiers in citations."""
+"""
 
+author: Matt Bierbaum
+date: 2019-03-14
+
+RegEx patterns for to find arXiv identifiers citations in fulltext articles.
+"""
+
+# These are all the primary categories present in the OAI ArXiv metadata
 CATEGORIES = [
     "acc-phys", "adap-org", "alg-geom", "ao-sci", "astro-ph", "atom-ph",
     "bayes-an", "chao-dyn", "chem-ph", "cmp-lg", "comp-gas", "cond-mat", "cs",
     "dg-ga", "funct-an", "gr-qc", "hep-ex", "hep-lat", "hep-ph", "hep-th",
     "math", "math-ph", "mtrl-th", "nlin", "nucl-ex", "nucl-th", "patt-sol",
     "physics", "plasm-ph", "q-alg", "q-bio", "quant-ph", "solv-int",
-    "supr-con", "eess", "econ"
+    "supr-con", "eess", "econ", "q-fin", "stat"
+]
+
+#  All subcategories with more than 2 capital letters (not SG, SI, SP, etc)
+SUB_CATEGORIES = [
+     'acc-ph', 'ao-ph', 'app-ph', 'atm-clus', 'atom-ph', 'bio-ph', 'chem-ph',
+     'class-ph', 'comp-ph', 'data-an', 'dis-nn', 'ed-ph', 'flu-dyn', 'gen-ph',
+     'geo-ph', 'hist-ph', 'ins-det', 'med-ph', 'mes-hall', 'mtrl-sci', 'optics',
+     'other', 'plasm-ph', 'pop-ph', 'quant-gas', 'soc-ph', 'soft', 'space-ph',
+     'stat-mech', 'str-el', 'supr-con'
 ]
 
 __all__ = (
@@ -18,15 +34,19 @@ __all__ = (
 
 # A common typo is to exclude the hyphen in the category.
 categories = CATEGORIES + [cat.replace('-', '') for cat in CATEGORIES]
+subcategories = SUB_CATEGORIES + [cat.replace('-', '') for cat in SUB_CATEGORIES]
 
-RE_SEPS = r'.{1,5}'
-RE_CATEGORIES = r'(?:{})(?:[.][A-Z]{{2}})?'.format(r'|'.join(categories))
-RE_DATE = r'[0-9]{2}(?:0[1-9]|1[0-2])'
+#  capture possible minor categories
+RE_CATEGORIES = r'(?:{})(?:(?:[.][A-Z]{{2}})|(?:{}))?'.format(
+    r'|'.join(categories), r'|'.join(subcategories)
+)
+
+RE_DATE = r'(?<!\d)[0-9]{2}(?:0[1-9]|1[0-2])'
 RE_VERSION = r'(?:[vV][1-9]\d*)?'
 
 # =============================================================================
-RE_NUM_NEW = RE_DATE + r'[.]\d{4,5}' + RE_VERSION
-RE_NUM_OLD = RE_DATE + r'\d{3}' + RE_VERSION
+RE_NUM_NEW = RE_DATE + r'(?:[.]\d{4,5})' + RE_VERSION
+RE_NUM_OLD = RE_DATE + r'(?:\d{3})' + RE_VERSION
 
 # matches: 1612.00001 1203.0023v2
 RE_ID_NEW = r'(?:{})'.format(RE_NUM_NEW)
@@ -56,7 +76,7 @@ RE_PREFIX_EPRINT = r'(?i:e[-]?print[s]?.{1,3})'
 
 # =============================================================================
 # matches simple old or new identifiers, no fancy business
-REGEX_ARXIV_SIMPLE = r'({}|{})'.format(RE_ID_OLD, RE_ID_NEW)
+REGEX_ARXIV_SIMPLE = r'(?:{}|{})'.format(RE_ID_OLD, RE_ID_NEW)
 
 # this one follows the guide set forth by:
 #   https://arxiv.org/help/arxiv_identifier
@@ -74,16 +94,18 @@ REGEX_ARXIV_STRICT = (
 # mentions anything about the arxiv before hand, then it is an id.
 REGEX_ARXIV_FLEXIBLE = (
     r'(?:'
+      r'({})'.format(REGEX_ARXIV_SIMPLE) +  # capture
+    r')|(?:'
       r'(?:'
         r'(?:{})?'.format(RE_PREFIX_URL) +
         r'(?:{})?'.format(RE_PREFIX_EPRINT) +
         r'(?:'
           r'(?:{})?'.format(RE_PREFIX_ARXIV) +
-          r'({})'.format(RE_ID_OLD) +
+          r'({})'.format(RE_ID_OLD) +  # capture
         r'|'
           r'(?:{})'.format(RE_PREFIX_ARXIV) +
           r'(?:{}/)?'.format(RE_CATEGORIES) +
-          r'({})'.format(RE_ID_NEW) +
+          r'({})'.format(RE_ID_NEW) +  # capture
         r')'
       r')'
     r'|'
@@ -94,13 +116,15 @@ REGEX_ARXIV_FLEXIBLE = (
         r'(?:{})'.format(RE_PREFIX_ARXIV) +
       r')'
       r'.*?'
-      r'({})'.format(REGEX_ARXIV_SIMPLE) +
+      r'({})'.format(REGEX_ARXIV_SIMPLE) +  # capture
     r')|(?:'
       r'(?:[\[\(]\s*)'
-        r'({})'.format(REGEX_ARXIV_SIMPLE) +
+        r'({})'.format(REGEX_ARXIV_SIMPLE) +  # capture
       r'(?:\s*[\]\)])'
     r')'
 )
+
+# TODO: check these tests
 
 TEST_POSITIVE = [
     'arXiv:quant-ph 1503.01017v3',
