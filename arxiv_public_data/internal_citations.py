@@ -9,9 +9,8 @@ import numpy as np
 from multiprocessing import Pool
 
 from arxiv_public_data.regex_arxiv import REGEX_ARXIV_FLEXIBLE, clean
+from arxiv_public_data.config import OUTDIR
 
-
-OUTDIR = '/pool0/arxiv/full-text'
 RE_FLEX = re.compile(REGEX_ARXIV_FLEXIBLE)
 RE_OLDNAME_SPLIT = re.compile(r"([a-z\-]+)(\d+)")
 
@@ -47,9 +46,12 @@ def extract_references(filename, pattern=RE_FLEX):
             list of found arXiv IDs
     """
     out = []
-    for matches in pattern.findall(open(filename, 'r').read()):
-        out.extend([clean(a) for a in matches if a])
-    return out
+    with open(filename, 'r') as fn:
+        txt = fn.read()
+
+        for matches in pattern.findall(txt):
+            out.extend([clean(a) for a in matches if a])
+    return list(set(out))
 
 def citation_list_inner(articles):
     """ Find references in all the input articles
@@ -64,11 +66,13 @@ def citation_list_inner(articles):
     """
     cites = {}
     for i, article in enumerate(articles):
+        if i % 1000 == 0:
+            print(i)
         try:
             refs = extract_references(article)
             cites[path_to_id(article)] = refs
         except:
-            print("Error in {}".format(articles))
+            print("Error in {}".format(article))
             continue
     return cites
 
