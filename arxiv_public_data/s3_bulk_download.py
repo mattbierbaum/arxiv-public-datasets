@@ -36,20 +36,18 @@ import gzip
 import glob
 import shlex
 import shutil
+import tarfile
 import boto3
 import hashlib
-import botocore
 import requests
 import subprocess 
+
 from functools import partial
 from multiprocessing import Pool
-
+from collections import defaultdict
 import xml.etree.ElementTree as ET
 
-# Location of text files extracted from PDFs
-OUTDIR = os.path.abspath('/pool0/arxiv/full-text')
-# Location of TAR files
-TARDIR = os.path.abspath('/pool0/arxiv/full-text/rawpdfs')
+from arxiv_public_data.config import OUTDIR, TARDIR
 
 CHUNK_SIZE = 2**20  # 1MB
 
