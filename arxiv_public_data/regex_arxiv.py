@@ -6,6 +6,8 @@ date: 2019-03-14
 RegEx patterns for to find arXiv identifiers citations in fulltext articles.
 """
 
+import re
+
 # These are all the primary categories present in the OAI ArXiv metadata
 CATEGORIES = [
     "acc-phys", "adap-org", "alg-geom", "ao-sci", "astro-ph", "atom-ph",
@@ -34,9 +36,11 @@ __all__ = (
 dashdict = {c.replace('-', ''): c for c in CATEGORIES if '-' in c}
 dashdict.update({c.replace('-', ''): c for c in SUB_CATEGORIES if '-' in c})
 
+REGEX_VERSION_SPLITTER = re.compile(r'([vV][1-9]\d*)')
+
 def strip_version(name):
     """ 1501.21981v1 -> 1501.21981 """
-    return name.split('v')[0]
+    return REGEX_VERSION_SPLITTER.split(name)[0]
 
 def format_cat(name):
     """ Strip subcategory, add hyphen to category name if missing """
@@ -76,12 +80,12 @@ RE_CATEGORIES = r'(?:{})(?:(?:[.][A-Z]{{2}})|(?:{}))?'.format(
 # valid YYMM date, NOT preceded by any digits
 # NOTE: at the date of writing, it is 2019, so we do not allow
 # proper dates for YY 20 or larger
-RE_DATE = r'(?<![\d.])(?:[0-1][0-9])(?:0[1-9]|1[0-2])'
+RE_DATE = r'(?:(?:[0-1][0-9])|(?:9[1-9]))(?:0[1-9]|1[0-2])'
 RE_VERSION = r'(?:[vV][1-9]\d*)?'
 
 # =============================================================================
-RE_NUM_NEW = RE_DATE + r'(?:[.]\d{4,5})(?![\d.])' + RE_VERSION
-RE_NUM_OLD = RE_DATE + r'(?:\d{3})(?![\d.])' + RE_VERSION
+RE_NUM_NEW = RE_DATE + r'(?:[.]\d{4,5})' + RE_VERSION
+RE_NUM_OLD = RE_DATE + r'(?:\d{3})' + RE_VERSION
 
 # matches: 1612.00001 1203.0023v2
 RE_ID_NEW = r'(?:{})'.format(RE_NUM_NEW)
@@ -177,13 +181,16 @@ TEST_POSITIVE = [
     'arXiv e-print: 1306.2144',
     'Preprint arXiv:math/0612139',
     'Vertices in a Digraph. arXiv preprint 1602.02129 ',
-]
-
-TEST_NEGATIVE = [
+    'cond-mat/0309488.'
     'decays, 1701.01871 LHCB-PAPE',
     'Distribution. In: 1404.2485v3 (2015)',
     '113005 (2013), 1307.4331,',
+    'scalar quantum 1610.07877v1',
+    'cond-mat/0309488.'
+    'cond-mat/0309488.8383'
+]
+
+TEST_NEGATIVE = [
     'doi: 10.1145/ 321105.321114 ',
     'doi: 10.1145/ 1105.321114 ',
-    'scalar quantum 1610.07877v1'
 ]
