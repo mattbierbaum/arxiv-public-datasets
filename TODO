@@ -1,14 +1,9 @@
 TODO
 ====
 
-* Develop script for bulk download of arXiv PDFs from S3
-    - boto3
-
-* Develop script for automating pdf to text
-    - arXiv/arxiv-fulltext/extractor/tests/test_extractor.py
-    - on github, to find command to use Docker image
-
 * Use existing intra-ArXiv citation network and newly downloaded meta data
     to identify strong categories
 
-* Start writing workshop paper (arXiv intro, summary of previous work...)
+* change default usage of s3 download and convert to python ...
+
+* use regex to scan for intra-citations

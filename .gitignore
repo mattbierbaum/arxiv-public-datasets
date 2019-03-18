@@ -109,4 +109,4 @@ venv.bak/
 *.json*
 *.pkl
 data
-
+config.json

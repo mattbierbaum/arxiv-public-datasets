@@ -19,11 +19,42 @@ Requirements:
 
 * python3 with pipenv
 
+**Run OAI metadata harvester**
+
+    pipenv install
+    pipenv shell
+    python arxiv_public_data/oai_metadata.py [OPTIONAL filepath.json.gz]
+
+This will download the entire ArXiv metadata set, saving it as a series of 
+gzip-compressed JSON entries. The default save location is
+`./data/arxiv-metadata-oai-<date>.json.gz`. This process will take at least 6
+hours, as the OAI server only sends 1000 entries every 15 seconds. A resumption
+token is saved, so the process can be restarted by running again with the same
+filename input.
+
 ## PDFs
 
 Requirements:
 
-* AWS account with access keys
+* Amazon AWS account with access keys
+
+**Bulk download of ArXiv PDFs**
+
+This download costs about $100 (and is 1.1TB) at the time of writing, as the 
+[ArXiv bulk download](https://arxiv.org/help/bulk_data) only allows
+requester-pays AWS S3 downloads. Set the `savedir` keyword arguments of
+`get_manifest` and `download_manifest_files` to set where the files will be
+saved, and be sure you have over 1TB of space in that location. The following
+will download all of the ArXiv PDFs. If you want to also convert the PDFs to
+text, see the section below for a combined download and conversion function.
+
+    pipenv install
+    pipenv shell
+    python
+    >>> import arxiv_public_data.s3_bulk_download as s3
+    >>> savedir = <location to save S3 download>
+    >>> manifest = s3.get_manifest(savedir=savedir)
+    >>> s3.download_manifest_files(manifest, savedir=savedir)
 
 ## Plain text
 
@@ -65,3 +96,25 @@ a volume:
     docker run --rm -v $PDFS:/pdfs fulltext
 
 Then in PDFS, there should be a corresponding .txt for every .pdf
+
+**Bulk PDF conversion**
+
+To use our tool for text conversion of all the PDFs from the ArXiv bulk download
+described above, execute the following. NOTE: if you have not already downloaded
+the PDFs, this tool will do so. If you have downloaded them, be sure to specify
+the correct `savedir` so that the tool will look for an existing file first. To
+be safe, try using the keyword `dryrun=True` to print out the actions of the
+tool without downloading.
+
+    pipenv install
+    pipenv shell
+    python
+    >>> import arxiv_public_data.s3_bulk_download as s3
+    >>> savedir = <location of saved PDFs>
+    >>> outdir = <location of converted text file hierarchy>
+    >>> manifest = s3.get_manifest(savedir=savedir)
+    >>> s3.download_and_process_manifest_file(manifest, processes=<number>,
+        savedir=savedir, outdir=outdir)
+
+This will take many core-hours. At the time of writing, converting 1.39
+million articles required over 4000 core-hours.
