@@ -1,9 +1,10 @@
 """
+regex_arxiv.py
 
 author: Matt Bierbaum
 date: 2019-03-14
 
-RegEx patterns for to find arXiv identifiers citations in fulltext articles.
+RegEx patterns for finding arXiv id citations in fulltext articles.
 """
 
 import re
@@ -162,8 +163,6 @@ REGEX_ARXIV_FLEXIBLE = (
       r'(?:\s*[\]\)])'
     r')'
 )
-
-# TODO: check these tests
 
 TEST_POSITIVE = [
     'arXiv:quant-ph 1503.01017v3',
