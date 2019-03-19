@@ -9,9 +9,14 @@ import os
 import pickle
 import numpy as np
 
-import tensorflow as tf
-import tensorflow_hub as hub
-import sentencepiece as spm
+try:
+    import tensorflow as tf
+    import tensorflow_hub as hub
+    import sentencepiece as spm
+except ImportError as e:
+    print("This module requires 'tensorflow', 'tensorflow-hub', and"
+          "'sentencepiece'\n"
+          'Please install these modules to use tf_hub.py')
 
 from arxiv_public_data.config import ARXIV_DIR
 
