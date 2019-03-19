@@ -105,7 +105,8 @@ def universal_sentence_encoder_lite(strings, filename, spm_path, batchsize=32):
     g = tf.Graph()
     with g.as_default():
         module = hub.Module(UNIV_SENTENCE_LITE)
-        input_placeholder = tf.sparse_placeholder(tf.int64, shape=[None, None])
+        input_placeholder = tf.sparse_placeholder(tf.int64, shape=[batchsize,
+                                                                   148])
         embeddings = module(
             inputs=dict(
                 values=input_placeholder.values, indices=input_placeholder.indices,
@@ -160,6 +161,17 @@ def create_save_embeddings(strings, filename, encoder, encoder_args=(),
         strings: list(str)
         filename: str
             embeddings will be saved in ARXIV_DIR/embeddings/filename
+    Usage
+    -----
+    Universal Sentence Encoder Lite:
+    >>> spm_path = get_sentence_piece_model()
+    >>> create_save_embeddings(strings, filename, 
+                               universal_sentence_encoder_lite,
+                               (spm_path,), encoder_kwargs=dict(batchsize=1024))
+
+    ELMO:
+    >>> create_save_embeddings(strings, filename, elmo_strings,
+                               encoder_kwargs=dict(batchsize=64))
     """
     filepath = os.path.join(ARXIV_DIR, "embeddings")
     if not os.path.exists(filepath):
