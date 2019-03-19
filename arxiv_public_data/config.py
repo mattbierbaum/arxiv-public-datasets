@@ -18,9 +18,10 @@ def get_outdir():
     return out
 
 try:
-    OUTDIR = get_outdir()
+    ARXIV_DIR = get_outdir()
 except Exception as e:
     print("Error attempting to get path from ENV or json conf, defaulting to current directory")
-    OUTDIR = DEFAULT_PATH
+    ARXIV_DIR = DEFAULT_PATH
 
-TARDIR = os.path.join(OUTDIR, 'rawpdfs')
+OUTDIR = os.path.join(ARXIV_DIR, 'full-text')
+TARDIR = os.path.join(ARXIV_DIR, 'full-text', 'rawpdfs')
