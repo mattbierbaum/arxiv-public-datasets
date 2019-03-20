@@ -22,8 +22,9 @@ import json
 import gzip
 
 from arxiv_public_data.oai_metadata import load_metadata
+from arxiv_public_data.regex_arxiv import strip_version, format_cat
 
-def loaddata(fname='data/citations-internal.json.gz'):
+def loaddata(fname='data/internal-references.json.gz'):
     return json.load(gzip.open(fname, 'r'))
 
 def clean_cite_name(name):
@@ -41,13 +42,7 @@ def clean_cite_name(name):
         and subcategory modifications,
         e.g. 
     """
-    if 'v' in name:  # strip out version numbers
-        name = name.split('v')[0]
-    cat_id = name.split('/')
-    if len(cat_id) > 1:  # there is a category name
-        if cat_id[0][-1].isupper():  # is a sub cat
-            name = cat_id[0].split('.')[0] + '/' + cat_id[1]
-    return name
+    return strip_version(format_cat(name))
 
 def bad_ids(data, clean=True):
     """ Return arxiv ids cited which do not exist """
@@ -60,16 +55,12 @@ def bad_ids(data, clean=True):
 def makegraph(data, clean=True, directed=True):
     G = nx.DiGraph() if directed else nx.Graph()
     G.add_nodes_from(data.keys())
-    bad_refs = []
     for art in data.keys():
         for ref in data[art]:
-            if ref in data:
+            ref = clean_cite_name(ref) if clean else ref
+            if not ref == art and ref in data:
                 G.add_edge(art, ref)
-            elif clean_cite_name(ref) in data and clean:
-                G.add_edge(art, clean_cite_name(ref))
-            else:
-                bad_refs.append((art, clean_cite_name(ref)))
-    return G, bad_refs
+    return G
 
 def biggest_connected_subgraph(G):
     if G.is_directed():
