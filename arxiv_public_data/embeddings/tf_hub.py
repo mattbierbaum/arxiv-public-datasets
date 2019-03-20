@@ -1,8 +1,7 @@
 """
-elmo.py
+tf_hub.py
 
-https://tfhub.dev/google/elmo/2
-
+Find text embeddings using pre-trained TensorFlow Hub models
 """
 
 import os
@@ -42,7 +41,7 @@ def elmo_strings(strings, filename, batchsize=32):
             size of batches
     """
     batches = np.array_split(
-        np.array(strings), len(strings)//batchsize
+        np.array(strings, dtype='object'), len(strings)//batchsize
     )
 
     g = tf.Graph()
@@ -102,7 +101,7 @@ def universal_sentence_encoder_lite(strings, filename, spm_path, batchsize=32):
             size of batches
     """
     batches = np.array_split(
-        np.array(strings), len(strings)//batchsize
+        np.array(strings, dtype='object'), len(strings)//batchsize
     )
     sp = spm.SentencePieceProcessor()
     sp.Load(spm_path)
@@ -172,7 +171,7 @@ def create_save_embeddings(strings, filename, encoder, encoder_args=(),
     >>> spm_path = get_sentence_piece_model()
     >>> create_save_embeddings(strings, filename, 
                                universal_sentence_encoder_lite,
-                               (spm_path,), encoder_kwargs=dict(batchsize=1024))
+                               (spm_path,), encoder_kwargs=dict(batchsize=512))
 
     ELMO:
     >>> create_save_embeddings(strings, filename, elmo_strings,
