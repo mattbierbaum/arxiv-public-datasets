@@ -28,6 +28,7 @@ import os
 import gzip
 import json
 import time
+import hashlib
 import datetime
 import requests
 import xml.etree.ElementTree as ET
@@ -232,6 +233,23 @@ def load_metadata(infile):
     with gzip.open(infile, 'rt', encoding='utf-8') as fin:
         return [json.loads(line) for line in fin.readlines()]
 
+def hash_abstracts(metadata):
+    """ Replace abstracts with their MD5 hash for legal distribution """
+    metadata_no_abstract = []
+    for i in range(len(metadata)):
+        m = metadata[i].copy()
+        m['abstract_md5'] = hashlib.md5(m['abstract'].encode()).hexdigest()
+        del m['abstract']
+        metadata_no_abstract.append(m)
+    return metadata_no_abstract
+
+def validate_abstract_hashes(metadata, metadata_no_abstract):
+    """ Validate that abstracts match the hashes """
+    for m, n in zip(metadata, metadata_no_abstract):
+        md5 = hashlib.md5(m['abstract'].encode()).hexdigest()
+        if not md5 == n['abstract_md5']:
+            return False
+    return True
 
 if __name__ == "__main__":
     import sys
