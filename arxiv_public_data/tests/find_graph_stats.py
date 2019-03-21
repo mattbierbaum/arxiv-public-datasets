@@ -1,10 +1,37 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import arxiv_public_data.tests.intra_citation as ia 
 import time
+from datetime import datetime
 from powerlaw import Fit
 
+# Data from Subelj, et al., Nework-based statistical comparison of citation
+# topology of bibliographic databases.
+# Scientific reports, 4:6496,  2014.
+Header = ['Dataset', r'{$N_nodes$}', r'{$N_edges$}', r'{$\langle k \rangle$}',
+          r'{$\alpha_in$}', r'{$\alpha_out$}', r'{$\langle C \rangle$}',
+          r'{\% WCC}', r'{\% isolated}']
+WoS = ['WoS', r'$1.40 \times 10^5$', r'$6.4 \times 10^5$', '9.11', '2.39', 
+        '3.88 ', '--', '97 \% ', '--']
+CiteSeer = ['CiteSeer', r'$3.84 \times 10^5$', r'$1.74 \times 10^6$', '9.08' , 
+        '2.28', '3.82 ', '--' '95 \% ', '--']
+ArXiv = ['ArXiv', r'$3.34 \times 10^4$', r'$4.21 \times 10^5$', '24.50', '2.54', 
+        '3.45', '--', '99.6 \%', '--']
+
+def make_latex_table(rows=[Header, WoS, CiteSeer, ArXiv]):
+    """ Populate a latex table with a list of rows """
+    w = len(rows[0]) - 1
+    out = ('\\begin{table}[htbp]\n'
+	   '\\begin{center}\n'
+    	   r'\begin{tabular}{ ' + 'l{}'.format(w*'S')+' }\n'
+    	   '\\toprule\n')
+    rowstrings = []
+    for r in rows:
+        rowstrings.append(' & '.join(map(str, r)) + r'\\ \n')
+    end = r'\bottomrule' + '\n' + r'\end{tabular}'
+    return out + '\n'.join(rowstrings) + end
 
 def main():
     
@@ -15,9 +42,10 @@ def main():
     #G = G.to_directed()
     
     #Load graph   
-    name = 'data/internal-references-pdftotext.json.gz'
+    #name = 'data/internal-references-pdftotext.json.gz'
+    name = '../../data/internal-references-pdftotext.json.gz'
     q = ia.loaddata(fname=name)
-    G, badrefs = ia.makegraph(q)
+    G = ia.makegraph(q)
 
     #basic stats
     N_nodes, N_edges = G.number_of_nodes(), G.number_of_edges()
@@ -26,23 +54,25 @@ def main():
     t1 = time.time()
     in_deg = [d for n, d in G.in_degree()]
     out_deg = [d for n, d in G.out_degree()]
-    np.savetxt('data/in_degree.txt', in_deg)
-    np.savetxt('data/out_degree.txt', out_deg)
+    np.savetxt('../../data/in_degree.txt', in_deg)
+    np.savetxt('../../data/out_degree.txt', out_deg)
     mean_k = 2*np.mean(in_deg)
     t2 = time.time()
     print('degree took ' + str((t2-t1)/60.0) + ' mins')
 
     #Find powerlaw fits
     fit_in, fit_out = Fit(in_deg,xmin=0), Fit(out_deg,xmin=0)
-    alpha_in, xmin_in = np.round(fit_in.power_law.alpha,2), np.round(fit_in.power_law.xmin,2)
-    alpha_out, xmin_out = np.round(fit_out.power_law.alpha,2), np.round(fit_out.power_law.xmin,2)
+    alpha_in = np.round(fit_in.power_law.alpha,2)
+    xmin_in = np.round(fit_in.power_law.xmin,2)
+    alpha_out = np.round(fit_out.power_law.alpha,2)
+    xmin_out = np.round(fit_out.power_law.xmin,2)
     print('For power law fitting in-degree: x_min = ' + str(xmin_in))
     print('For power law fitting out-degree: x_min = ' + str(xmin_out) + '\n')
 
     #Clustering coeff
     t1 = time.time()
     cs = list(nx.clustering(G).values())
-    np.savetxt('data/clustering_c.txt', cs)
+    np.savetxt('../../data/clustering_c.txt', cs)
     mean_C = np.round(np.mean(cs), 2)
     t2 = time.time()
     print('cluster coeff took ' + str((t2-t1)/60.0) + ' mins')
@@ -68,19 +98,20 @@ def main():
  
 
     #results
-    stats = [N_nodes, N_edges, mean_k, alpha_in, alpha_out, mean_C, fraction_WCC, fraction_isolated]
+    stats = [N_nodes, N_edges, mean_k, alpha_in, alpha_out, mean_C, 
+             fraction_WCC, fraction_isolated]
     print(stats)
 
     #Stuff for tables
-    headings = ['','$N_nodes$', 'N_edges', '$\langle k \rangle$', '\alpha_in', '\alpha_out', '\langle C \rangle', '\% WCC' \
-               '% isolated']
     
-    row1 = ['openArXiv', N_nodes, N_edges, mean_k, alpha_in, alpha_out, mean_C, fraction_WCC, fraction_isolated]
-    row2 = ['WoS', '$1.40 \times 10^5$', '$6.4 \times 10^5$', '9.11', '2.39', '3.88 ', '--', '97 \% ', '--']
-    row3 = ['CiteSeer', '$3.84 \times 10^5$', '$1.74 \times 10^6$', '9.08' , '2.28', '3.82 ', '--' '95 \% ', '--']
-    row4 = ['ArXiv', '$3.34 \times 10^4$', '$4.21 \times 10^5$', '24.50', '2.54', '3.45', '--', '99.6 \%', '--']
-    
-    
+    OpenArXiv = ['openArXiv'] 
+    OpenArXiv.extend(map(lambda n: '{:.3f}'.format(n), stats))
+
+    # Automatically make table!
+    datenow = str(datetime.now()).split()[0]
+    with open('graph-stats-{}.tex'.format(datenow), 'w') as fout:
+        fout.write(make_latex_table([Header, OpenArXiv, WoS, CiteSeer, ArXiv]))
+   
     #### MAKE FIGURE
     tick_size = 20
     axis_size = 30
@@ -139,9 +170,9 @@ def main():
     ax3.text(0.9, 0.55, '', transform=ax2.transAxes,
           fontsize=inset_size, va='top', ha='right')
     plt.tight_layout()
-    plt.savefig('figures/histograms_onerow.png')
-
-    return 
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
+    plt.savefig('figures/histograms_onerow-{}.pdf'.format(datenow))
 
 if __name__ == '__main__':
     main()
