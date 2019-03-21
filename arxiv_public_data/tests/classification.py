@@ -4,15 +4,18 @@ Classification.py
 """
 
 import os
+import json
+import gzip
 import pickle
 import numpy as np
 from datetime import datetime
-#import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 
 from arxiv_public_data.oai_metadata import load_metadata
-from arxiv_public_data.tests.intra_citation import loaddata
 import arxiv_public_data.tests.cocitation_category_feature as features
+
+def loaddata(fname='data/internal-references.json.gz'):
+    return json.load(gzip.open(fname, 'r'))
 
 def load_embeddings(filename):
     """
@@ -105,8 +108,10 @@ if __name__ == "__main__":
     mc_train, mc_test = features.cocitation_feature(adj, ids_train, ids_test,
                                                     target_train, target_test)
 
-    lr = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-                            verbose=1, max_iter=200)
+    #lr = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+    #                        verbose=1, max_iter=200)
+    model_kwargs = dict(loss='log', tol=1e-6, max_iter=40, alpha=1e-7,
+                        verbose=False, n_jobs=6)
     results = {}
     
     ## First fit on just titles
@@ -116,6 +121,7 @@ if __name__ == "__main__":
     title_test = title_vec[train_size:]
 
     print('Fitting title vectors')
+    lr = SGDClassifier(**model_kwargs)
     results['titles'] = train_test(lr, title_train, target_train, title_test,
                                    target_test)
     print(results['titles'])
@@ -128,6 +134,7 @@ if __name__ == "__main__":
     abstract_test = abstract_vec[train_size:]
 
     print('Fitting abstract vectors')
+    lr = SGDClassifier(**model_kwargs)
     results['abstracts'] = train_test(lr, abstract_train, target_train,
                                       abstract_test, target_test)
     print(results['abstracts'])
@@ -147,6 +154,7 @@ if __name__ == "__main__":
 
     # Next fit on the cocitation features
     print('Fitting cocitation vectors')
+    lr = SGDClassifier(**model_kwargs)
     results['cocitation'] = train_test(lr, mc_train, target_train,
                                        mc_test, target_test)
     print(results['cocitation'])
@@ -159,6 +167,7 @@ if __name__ == "__main__":
     del title_abstract_test
     
     print('Fitting title+abstract+cocitation vectors')
+    lr = SGDClassifier(**model_kwargs)
     results['cocitation+title+abstracts'] = train_test(
         lr, co_ti_ab_train, target_train, co_ti_ab_test, target_test
     )
