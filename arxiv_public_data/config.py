@@ -6,19 +6,19 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s: %(message)s'
 )
-baselog = logging.getLogger('openarxiv')
+baselog = logging.getLogger('arxivdata')
 logger = baselog.getChild('config')
 
-DEFAULT_PATH = os.path.join(os.path.abspath('./'), 'openarxiv-data')
+DEFAULT_PATH = os.path.join(os.path.abspath('./'), 'arxiv-data')
 JSONFILE = './config.json'
-KEY = 'OPENARXIV_DATA'
+KEY = 'ARXIV_DATA'
 
 def get_outdir():
     """
     Grab the outdir from:
     1) Environment
     2) config.json
-    3) default ($PWD/openarxiv-data)
+    3) default ($PWD/arxiv-data)
     """
     if os.environ.get(KEY):
         out = os.environ.get(KEY)

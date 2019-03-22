@@ -105,5 +105,8 @@ def default_filename():
     return os.path.join(DIR_OUTPUT, 'internal-citations.json.gz')
 
 def save_to_default_location(citations):
-    with gzip.open(default_filename(), 'wb') as fn:
+    filename = default_filename()
+
+    log.info('Saving to "{}"'.format(filename))
+    with gzip.open(filename, 'wb') as fn:
         fn.write(json.dumps(citations).encode('utf-8'))
