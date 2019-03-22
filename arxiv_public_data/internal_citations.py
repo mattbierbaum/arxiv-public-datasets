@@ -5,11 +5,12 @@ import sys
 import glob
 import os
 import gzip
+import json
 import numpy as np
 from multiprocessing import Pool
 
 from arxiv_public_data.regex_arxiv import REGEX_ARXIV_FLEXIBLE, clean
-from arxiv_public_data.config import OUTDIR
+from arxiv_public_data.config import DIR_FULLTEXT, DIR_OUTPUT
 
 RE_FLEX = re.compile(REGEX_ARXIV_FLEXIBLE)
 RE_OLDNAME_SPLIT = re.compile(r"([a-z\-]+)(\d+)")
@@ -22,7 +23,7 @@ def path_to_id(path):
     split = [a for a in RE_OLDNAME_SPLIT.split(name) if a]
     return "/".join(split)
 
-def all_articles(directory=OUTDIR):
+def all_articles(directory=DIR_FULLTEXT):
     """ Find all *.txt files in directory """
     out = []
     for root, dirs, files in os.walk(directory):
@@ -97,3 +98,9 @@ def citation_list_parallel(N=8):
     for c in cites:
         allcites.update(c)
     return allcites
+
+def default_filename():
+    return os.path.join(DIR_OUTPUT, 'internal-citations.json.gz')
+
+def save_to_default_location(citations):
+    json.dump(citations, gzip.open(default_filename(), 'wb'))
