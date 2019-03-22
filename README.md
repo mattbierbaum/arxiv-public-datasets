@@ -29,7 +29,9 @@ Download the code and prepare the python environment:
     pip3 install -e .
     pip3 install -r requirements.txt
 
-Decide where the data should live and modify the config.json file:
+Decide where the data should live and modify the config.json file. This
+directory needs to have adequate space to hold ~ 1TB of pdfs and ~ 70GB of text
+if you so choose to retrieve them:
 
     cp config.json.example config.json
     [edit config.json]
