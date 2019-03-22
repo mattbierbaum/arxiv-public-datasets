@@ -1,0 +1,9 @@
+TODO
+====
+
+* Use existing intra-ArXiv citation network and newly downloaded meta data
+    to identify strong categories
+
+* change default usage of s3 download and convert to python ...
+
+* use regex to scan for intra-citations

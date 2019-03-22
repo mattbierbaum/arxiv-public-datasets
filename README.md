@@ -29,7 +29,9 @@ Download the code and prepare the python environment:
     pip3 install -e .
     pip3 install -r requirements.txt
 
-Decide where the data should live and modify the config.json file:
+Decide where the data should live and modify the config.json file. This
+directory needs to have adequate space to hold ~ 1TB of pdfs and ~ 70GB of text
+if you so choose to retrieve them:
 
     cp config.json.example config.json
     [edit config.json]
@@ -42,11 +44,13 @@ Decide where the data should live and modify the config.json file:
 
 This will download the entire ArXiv metadata set, saving it as a series of
 gzip-compressed JSON entries. The default save location is
-`$OPENARXIV_DATA/arxiv-metadata-oai-<date>.json.gz`. This process will take at
+`$ARXIV_DATA/arxiv-metadata-oai-<date>.json.gz`. This process will take at
 least 6 hours, as the OAI server only sends 1000 entries every 15 seconds. A
 resumption token is saved, so the process can be restarted by running again.
 
 ## PDFs
+
+**Prepare credentials**
 
 In addition to the setup above, you need to prepare your AWS credentials for
 use with boto3, the Python AWS library. A long explanation is available
@@ -68,14 +72,12 @@ in the directory specified in `config.json`:
 
 ## Plain text
 
-### Bulk converting PDF
-
 **Bulk PDF conversion**
 
 To use our tool for text conversion of all the PDFs from the ArXiv bulk download
 described above, execute the following. NOTE: if you have not already downloaded
 the PDFs, this tool will do so. If you have downloaded them, be sure to not change
-the `$OPENARXIV_DATA` so that it will not re-download the tars.
+the `$ARXIV_DATA` so that it will not re-download the tars.
 
     python bin/fulltext.py [OPTIONAL number_of_processes, default cpu_count]
 
@@ -84,7 +86,8 @@ million articles required over 4000 core-hours.
 
 ## Cocitation network
 
-### Generating the network
+To generate the cocitation network, you first must have the full text. Then,
+with the directories still set up, run:
 
     python bin/cocitations.py [OPTIONAL number_of_processes, default cpu_count]
 

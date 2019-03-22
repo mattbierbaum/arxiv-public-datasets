@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+.DS_store
+
 # Distribution / packaging
 .Python
 build/
@@ -102,3 +104,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# data
+*.json*
+*.pkl
+data
+config.json
