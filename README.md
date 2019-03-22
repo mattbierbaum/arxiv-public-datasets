@@ -50,6 +50,8 @@ resumption token is saved, so the process can be restarted by running again.
 
 ## PDFs
 
+**Prepare credentials**
+
 In addition to the setup above, you need to prepare your AWS credentials for
 use with boto3, the Python AWS library. A long explanation is available
 [here](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html)
@@ -70,8 +72,6 @@ in the directory specified in `config.json`:
 
 ## Plain text
 
-### Bulk converting PDF
-
 **Bulk PDF conversion**
 
 To use our tool for text conversion of all the PDFs from the ArXiv bulk download
@@ -86,7 +86,8 @@ million articles required over 4000 core-hours.
 
 ## Cocitation network
 
-### Generating the network
+To generate the cocitation network, you first must have the full text. Then,
+with the directories still set up, run:
 
     python bin/cocitations.py [OPTIONAL number_of_processes, default cpu_count]
 
