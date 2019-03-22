@@ -49,3 +49,7 @@ DIR_FULLTEXT = os.path.join(DIR_BASE, 'fulltext')
 DIR_PDFTARS = os.path.join(DIR_BASE, 'tarpdfs')
 DIR_OUTPUT = os.path.join(DIR_BASE, 'output')
 LOGGER = baselog
+
+for dirs in [DIR_BASE, DIR_PDFTARS, DIR_FULLTEXT, DIR_OUTPUT]:
+    if not os.path.exists(dirs):
+        os.mkdir(dirs)

@@ -80,7 +80,7 @@ def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False,
             Look to see if file is already downloaded, and simply return md5sum
             if it it exists, unless redownload is True
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
     Returns
     -------
         md5sum : str
@@ -128,9 +128,7 @@ def get_manifest(filename=None, redownload=False):
             each dict contains the file metadata
     """
     manifest_file = filename or default_manifest_filename()
-    md5 = download_file(
-        S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False
-    )
+    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False)
     manifest = gzip.open(manifest_file, 'rb').read()
     return parse_manifest(manifest)
 
@@ -155,9 +153,12 @@ def parse_manifest(manifest):
         for f in root.findall('file')
     ]
 
+def _tar_to_filename(filename):
+    return os.path.join(DIR_PDFTARS, os.path.basename(filename)) + '.gz'
+
 def download_check_tarfile(filename, md5_expected, dryrun=False, redownload=False):
     """ Download filename, check its md5sum, and form the output path """
-    outname = os.path.join(DIR_PDFTARS, os.path.basename(filename)) + '.gz'
+    outname = _tar_to_filename(filename)
     md5_downloaded = download_file(
         filename, outname, dryrun=dryrun, redownload=redownload
     )
@@ -182,10 +183,10 @@ def download_check_tarfiles(list_of_fileinfo, dryrun=False):
             Some elements of results of get_manifest
         (optional)
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
     """
     for fileinfo in list_of_fileinfo:
-        download_check_tarfile(fileinfo['filename'], fileinfo['md5sum'], dryrun)
+        download_check_tarfile(fileinfo['filename'], fileinfo['md5sum'], dryrun=dryrun)
 
 def _call(cmd, dryrun=False, debug=False):
     """ Spawn a subprocess and execute the string in cmd """
@@ -225,7 +226,7 @@ def _make_pathname(filename):
     return os.path.join(DIR_FULLTEXT, cat, yearmonth, basename)
 
 
-def download_and_process(fileinfo, pdfnames=None, dryrun=False, debug=False, processes=1):
+def process_tarfile(fileinfo, pdfnames=None, dryrun=False, debug=False, processes=1):
     """
     Download and process one of the tar files from the ArXiv manifest.
     Download, unpack, and spawn the Docker image for converting pdf2text.
@@ -242,7 +243,7 @@ def download_and_process(fileinfo, pdfnames=None, dryrun=False, debug=False, pro
             dictionary of file information from parse_manifest
         (optional)
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
         debug : bool
             Silence stderr of Docker _call if debug is False
     """
@@ -253,13 +254,15 @@ def download_and_process(fileinfo, pdfnames=None, dryrun=False, debug=False, pro
         logger.info('Tar file appears processed, skipping {}...'.format(filename))
         return
 
-    outname = download_check_tarfile(filename, md5sum, dryrun=dryrun)
-    process_tarfile(filename, pdfnames=None, processes=processes, dryrun=dryrun)
-
     logger.info('Processing tar "{}" ...'.format(filename))
+    process_tarfile_inner(filename, pdfnames=None, processes=processes, dryrun=dryrun)
 
-def process_tarfile(filename, pdfnames=None, processes=1, dryrun=False):
-    outname = os.path.join(DIR_PDFTARS, os.path.basename(filename)) + '.gz'
+def process_tarfile_inner(filename, pdfnames=None, processes=1, dryrun=False):
+    outname = _tar_to_filename(filename)
+
+    if not os.path.exists(outname):
+        logger.error('Tarfile from manifest not found {}, skipping...'.format(outname))
+        return
 
     # unpack tar file
     if pdfnames:
@@ -289,7 +292,7 @@ def process_tarfile(filename, pdfnames=None, processes=1, dryrun=False):
     # clean up pdfs
     _call('rm -rf {}'.format(os.path.join(DIR_PDFTARS, basename)), dryrun)
 
-def download_and_process_manifest_files(list_of_fileinfo, processes=1, dryrun=False):
+def process_manifest_files(list_of_fileinfo, processes=1, dryrun=False):
     """
     Download PDFs from the ArXiv AWS S3 bucket and convert each pdf to text
     Parameters. If files are already downloaded, it will only process them.
@@ -300,10 +303,10 @@ def download_and_process_manifest_files(list_of_fileinfo, processes=1, dryrun=Fa
         processes : int
             number of paralell workers to spawn (roughly as many CPUs as you have)
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
     """
     for fileinfo in list_of_fileinfo:
-        download_and_process(fileinfo, dryrun=dryrun, processes=processes)
+        process_tarfile(fileinfo, dryrun=dryrun, processes=processes)
 
 def check_if_any_processed(fileinfo):
     """
@@ -365,7 +368,7 @@ def rerun_missing(missing, processes=1):
 
     for tar, names in sort:
         logger.info("Running {} ({} to do)...".format(tar, len(names)))
-        process_tarfile(tar, pdfnames=names, processes=processes)
+        process_tarfile_inner(tar, pdfnames=names, processes=processes)
 
 def process_missing(manifest, processes=1):
     """

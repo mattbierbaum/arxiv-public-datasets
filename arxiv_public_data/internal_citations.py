@@ -10,8 +10,9 @@ import numpy as np
 from multiprocessing import Pool
 
 from arxiv_public_data.regex_arxiv import REGEX_ARXIV_FLEXIBLE, clean
-from arxiv_public_data.config import DIR_FULLTEXT, DIR_OUTPUT
+from arxiv_public_data.config import DIR_FULLTEXT, DIR_OUTPUT, LOGGER
 
+log = LOGGER.getChild('fulltext')
 RE_FLEX = re.compile(REGEX_ARXIV_FLEXIBLE)
 RE_OLDNAME_SPLIT = re.compile(r"([a-z\-]+)(\d+)")
 
@@ -67,8 +68,8 @@ def citation_list_inner(articles):
     """
     cites = {}
     for i, article in enumerate(articles):
-        if i % 1000 == 0:
-            print(i)
+        if i > 0 and i % 1000 == 0:
+            print('Completed: {}'.format(i))
         try:
             refs = extract_references(article)
             cites[path_to_id(article)] = refs
@@ -90,6 +91,7 @@ def citation_list_parallel(N=8):
             all arXiv citations in all articles
     """
     articles = all_articles()
+    log.info('Calculating citation network for {} articles'.format(len(articles)))
 
     pool = Pool(N)
     cites = pool.map(citation_list_inner, np.array_split(articles, N))
@@ -103,4 +105,5 @@ def default_filename():
     return os.path.join(DIR_OUTPUT, 'internal-citations.json.gz')
 
 def save_to_default_location(citations):
-    json.dump(citations, gzip.open(default_filename(), 'wb'))
+    with gzip.open(default_filename(), 'wb') as fn:
+        fn.write(json.dumps(citations).encode('utf-8'))

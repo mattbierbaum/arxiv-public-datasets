@@ -5,7 +5,7 @@ import glob
 import shlex
 
 from multiprocessing import Pool
-from subprocess import check_call, CalledProcessError, TimeoutExpired
+from subprocess import check_call, CalledProcessError, TimeoutExpired, PIPE
 
 from arxiv_public_data.config import LOGGER
 from arxiv_public_data import fixunicode, pdfstamp
@@ -47,7 +47,7 @@ def average_word_length(txt):
 
 
 def process_timeout(cmd, timeout):
-    return check_call(cmd, timeout=timeout)
+    return check_call(cmd, timeout=timeout, stdout=PIPE, stderr=PIPE)
 
 
 # ============================================================================
@@ -78,7 +78,6 @@ def run_pdf2txt(pdffile: str, timelimit: int=TIMELIMIT, options: str=''):
     )
     cmd = shlex.split(cmd)
     output = process_timeout(cmd, timeout=timelimit)
-    log.info(output)
 
     with open(tmpfile) as f:
         return f.read()
@@ -109,7 +108,6 @@ def run_pdftotext(pdffile: str, timelimit: int=TIMELIMIT) -> str:
     )
     cmd = shlex.split(cmd)
     output = process_timeout(cmd, timeout=timelimit)
-    log.info(output)
 
     with open(tmpfile) as f:
         return f.read()
@@ -243,7 +241,7 @@ def convert_directory(path):
     pdffiles = sorted_files(globber)
 
     log.info('Searching "{}"...'.format(globber))
-    log.info('Found: {}'.format(pdffiles))
+    log.info('Found: {} pdfs'.format(len(pdffiles)))
 
     for pdffile in pdffiles:
         txtfile = reextension(pdffile, 'txt')
@@ -283,6 +281,9 @@ def convert_directory_parallel(path, processes):
     """
     globber = os.path.join(path, '*.pdf')
     pdffiles = sorted_files(globber)
+
+    log.info('Searching "{}"...'.format(globber))
+    log.info('Found: {} pdfs'.format(len(pdffiles)))
 
     pool = Pool(processes=processes)
     result = pool.map(convert_safe, pdffiles)
