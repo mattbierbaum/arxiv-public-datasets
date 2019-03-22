@@ -213,6 +213,7 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             resumptionToken = open(tokenfile, 'r').read()
         except Exception as e:
             log.warn("No tokenfile found '{}'".format(tokenfile))
+            log.info("Starting download from scratch...")
 
     while True:
         log.info('Index {:4d} | Records {:7d} | resumptionToken "{}"'.format(
