@@ -8,6 +8,11 @@ data and some mild post-processing and organization. Currently, it grabs or gene
 * **Plain text** -- PDFs converted to UTF-8 encoded plain text
 * **Citation graph** -- intra-arXiv citation graph between arXiv IDs only (generated from plain text)
 
+We are able to host certain generated portions of this dataset as released
+snapshots.  The iterations can be found under the releases tab:
+[Releases](https://github.com/mattbierbaum/arxiv-public-datasets/releases).
+However, the rest of it must be generated locally.
+
 The requirements to generate the datasets from this repository vary from
 dataset to dataset, but the requirements for all is:
 
