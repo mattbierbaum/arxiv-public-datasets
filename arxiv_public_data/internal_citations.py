@@ -6,7 +6,7 @@ import glob
 import os
 import gzip
 import json
-import numpy as np
+import math
 from multiprocessing import Pool
 
 from arxiv_public_data.regex_arxiv import REGEX_ARXIV_FLEXIBLE, clean
@@ -94,7 +94,12 @@ def citation_list_parallel(N=8):
     log.info('Calculating citation network for {} articles'.format(len(articles)))
 
     pool = Pool(N)
-    cites = pool.map(citation_list_inner, np.array_split(articles, N))
+
+    A = len(articles)
+    divs = list(range(0, A, math.ceil(A/N))) + [A]
+    chunks = [articles[s:e] for s, e in zip(divs[:-1], divs[1:])]
+
+    cites = pool.map(citation_list_inner, chunks)
 
     allcites = {}
     for c in cites:
