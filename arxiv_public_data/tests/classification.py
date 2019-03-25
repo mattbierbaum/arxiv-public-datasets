@@ -120,6 +120,14 @@ if __name__ == "__main__":
     title_train = title_vec[:train_size]
     title_test = title_vec[train_size:]
 
+    # Next fit on the cocitation features
+    print('Fitting cocitation vectors')
+    lr = SGDClassifier(**model_kwargs)
+    results['cocitation'] = train_test(lr, mc_train, target_train,
+                                       mc_test, target_test)
+    print(results['cocitation'])
+    print('cocitation vectors done!')
+
     print('Fitting title vectors')
     lr = SGDClassifier(**model_kwargs)
     results['titles'] = train_test(lr, title_train, target_train, title_test,
@@ -152,15 +160,7 @@ if __name__ == "__main__":
     print(results['abstract+titles'])
     print('abstract + title vectors done!')
 
-    # Next fit on the cocitation features
-    print('Fitting cocitation vectors')
-    lr = SGDClassifier(**model_kwargs)
-    results['cocitation'] = train_test(lr, mc_train, target_train,
-                                       mc_test, target_test)
-    print(results['cocitation'])
-    print('cocitation vectors done!')
-
-    # Next fit on the cocitation features
+        # Next fit on the cocitation features
     co_ti_ab_train = np.concatenate([title_abstract_train, mc_train], axis=1)
     del title_abstract_train
     co_ti_ab_test = np.concatenate([title_abstract_test, mc_test], axis=1)
