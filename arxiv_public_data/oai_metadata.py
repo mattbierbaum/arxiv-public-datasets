@@ -26,12 +26,17 @@ Resources
 
 import os
 import gzip
+import glob
 import json
 import time
 import hashlib
 import datetime
 import requests
 import xml.etree.ElementTree as ET
+
+from arxiv_public_data.config import LOGGER, DIR_BASE
+
+log = LOGGER.getChild('metadata')
 
 URL_ARXIV_OAI = 'https://export.arxiv.org/oai2'
 URL_CITESEER_OAI = 'http://citeseerx.ist.psu.edu/oai2'
@@ -69,7 +74,7 @@ def get_list_record_chunk(resumptionToken=None, harvest_url=URL_ARXIV_OAI,
 
     if response.status_code == 503:
         secs = int(response.headers.get('Retry-After', 20)) * 1.5
-        print('Requested to wait, waiting {} seconds until retry...'.format(secs))
+        log.info('Requested to wait, waiting {} seconds until retry...'.format(secs))
 
         time.sleep(secs)
         return get_list_record_chunk(resumptionToken=resumptionToken)
@@ -151,13 +156,23 @@ def parse_xml_listrecords(root):
     return records, resumptionToken
 
 def check_xml_errors(root):
-    """ Check for, print, and raise any OAI service errors in the XML """
+    """ Check for, log, and raise any OAI service errors in the XML """
     error = root.find('OAI:error', OAI_XML_NAMESPACES)
 
     if error is not None:
         raise RuntimeError(
             'OAI service returned error: {}'.format(error.text)
         )
+
+def find_default_locations():
+    outfile = os.path.join(DIR_BASE, 'arxiv-metadata-oai-*.json.gz')
+    resume = os.path.join(DIR_BASE, 'arxiv-metadata-oai-*.json.gz-resumptionToken.txt')
+    fn_outfile = sorted(glob.glob(outfile))
+    fn_resume = sorted(glob.glob(resume))
+
+    if len(fn_outfile) > 0:
+        return fn_outfile[-1]
+    return None
 
 def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
     """
@@ -176,7 +191,13 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             <outfile>-resumptionToken.txt
     """
     date = str(datetime.datetime.now()).split(' ')[0]
-    outfile = outfile or './data/arxiv-metadata-oai-{}.json.gz'.format(date)
+
+    outfile = (
+        outfile or # user-supplied
+        find_default_locations() or # already in progress 
+        os.path.join(DIR_BASE, 'arxiv-metadata-oai-{}.json.gz'.format(date)) # new file
+    )
+
     directory = os.path.split(outfile)[0]
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
@@ -184,15 +205,18 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
     chunk_index = 0
     total_records = 0
 
+    log.info('Saving metadata to "{}"'.format(outfile))
+
     resumptionToken = None
     if autoresume:
         try:
             resumptionToken = open(tokenfile, 'r').read()
         except Exception as e:
-            print("No tokenfile found '{}'".format(tokenfile))
+            log.warn("No tokenfile found '{}'".format(tokenfile))
+            log.info("Starting download from scratch...")
 
     while True:
-        print('Index {:4d} | Records {:7d} | resumptionToken "{}"'.format(
+        log.info('Index {:4d} | Records {:7d} | resumptionToken "{}"'.format(
             chunk_index, total_records, resumptionToken)
         )
         xml_root = ET.fromstring(get_list_record_chunk(resumptionToken))
@@ -209,20 +233,21 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
             with open(tokenfile, 'w') as fout:
                 fout.write(resumptionToken)
         else:
-            print('No resumption token, query finished')
+            log.info('No resumption token, query finished')
             return
 
         time.sleep(12)  # OAI server usually requires a 10s wait
 
-def load_metadata(infile):
+def load_metadata(infile=None):
     """
     Load metadata saved by all_of_arxiv, as a list of lines of gzip compressed
     json.
 
     Parameters
     ----------
-        infile : str
-            name of file saved by gzip
+        infile : str or None
+            name of file saved by gzip. If None, one is attempted to be found
+            in the expected location with the expected name.
 
     Returns
     -------
@@ -250,10 +275,3 @@ def validate_abstract_hashes(metadata, metadata_no_abstract):
         if not md5 == n['abstract_md5']:
             return False
     return True
-
-if __name__ == "__main__":
-    import sys
-
-    OUTFILE = sys.argv[1] if len(sys.argv) > 1 else None
-    print('Saving metadata to "{}"'.format(OUTFILE))
-    all_of_arxiv(OUTFILE)

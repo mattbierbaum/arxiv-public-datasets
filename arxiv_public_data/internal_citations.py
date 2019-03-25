@@ -5,12 +5,14 @@ import sys
 import glob
 import os
 import gzip
-import numpy as np
+import json
+import math
 from multiprocessing import Pool
 
 from arxiv_public_data.regex_arxiv import REGEX_ARXIV_FLEXIBLE, clean
-from arxiv_public_data.config import OUTDIR
+from arxiv_public_data.config import DIR_FULLTEXT, DIR_OUTPUT, LOGGER
 
+log = LOGGER.getChild('fulltext')
 RE_FLEX = re.compile(REGEX_ARXIV_FLEXIBLE)
 RE_OLDNAME_SPLIT = re.compile(r"([a-z\-]+)(\d+)")
 
@@ -22,7 +24,7 @@ def path_to_id(path):
     split = [a for a in RE_OLDNAME_SPLIT.split(name) if a]
     return "/".join(split)
 
-def all_articles(directory=OUTDIR):
+def all_articles(directory=DIR_FULLTEXT):
     """ Find all *.txt files in directory """
     out = []
     for root, dirs, files in os.walk(directory):
@@ -66,8 +68,8 @@ def citation_list_inner(articles):
     """
     cites = {}
     for i, article in enumerate(articles):
-        if i % 1000 == 0:
-            print(i)
+        if i > 0 and i % 1000 == 0:
+            print('Completed: {}'.format(i))
         try:
             refs = extract_references(article)
             cites[path_to_id(article)] = refs
@@ -89,11 +91,27 @@ def citation_list_parallel(N=8):
             all arXiv citations in all articles
     """
     articles = all_articles()
+    log.info('Calculating citation network for {} articles'.format(len(articles)))
 
     pool = Pool(N)
-    cites = pool.map(citation_list_inner, np.array_split(articles, N))
+
+    A = len(articles)
+    divs = list(range(0, A, math.ceil(A/N))) + [A]
+    chunks = [articles[s:e] for s, e in zip(divs[:-1], divs[1:])]
+
+    cites = pool.map(citation_list_inner, chunks)
 
     allcites = {}
     for c in cites:
         allcites.update(c)
     return allcites
+
+def default_filename():
+    return os.path.join(DIR_OUTPUT, 'internal-citations.json.gz')
+
+def save_to_default_location(citations):
+    filename = default_filename()
+
+    log.info('Saving to "{}"'.format(filename))
+    with gzip.open(filename, 'wb') as fn:
+        fn.write(json.dumps(citations).encode('utf-8'))

@@ -15,8 +15,8 @@ see: https://arxiv.org/help/bulk_data_s3
 Usage
 -----
 
-Set OUTDIR as the directory where the text parsed from pdfs should be placed.
-Set TARDIR as the directory where the raw pdf tars should be placed.
+Set DIR_FULLTEXT as the directory where the text parsed from pdfs should be placed.
+Set DIR_PDFTARS as the directory where the raw pdf tars should be placed.
 
 ```
 import arxiv_public_data.s3_bulk_download as s3
@@ -26,13 +26,14 @@ manifest = s3.get_manifest()
 
 # Download tar files and convert pdf to text
 # Costs money! Will only download if it does not find files
-s3.download_and_pdf2text(manifest)
+s3.download_and_process(manifest)
 ```
 """
 
 import os
 import re
 import gzip
+import json
 import glob
 import shlex
 import shutil
@@ -47,10 +48,12 @@ from multiprocessing import Pool
 from collections import defaultdict
 import xml.etree.ElementTree as ET
 
-from arxiv_public_data.config import OUTDIR, TARDIR
+from arxiv_public_data import fulltext
+from arxiv_public_data.config import DIR_FULLTEXT, DIR_PDFTARS, LOGGER
+
+logger = LOGGER.getChild('s3')
 
 CHUNK_SIZE = 2**20  # 1MB
-
 BUCKET_NAME = 'arxiv'
 S3_PDF_MANIFEST = 'pdf/arXiv_pdf_manifest.xml'
 S3_TEX_MANIFEST = 'src/arXiv_src_manifest.xml'
@@ -77,7 +80,7 @@ def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False,
             Look to see if file is already downloaded, and simply return md5sum
             if it it exists, unless redownload is True
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
     Returns
     -------
         md5sum : str
@@ -92,22 +95,42 @@ def download_file(filename, outfile, chunk_size=CHUNK_SIZE, redownload=False,
     url = s3.generate_presigned_url(
         "get_object",
         Params={
-            "Bucket": BUCKET_NAME, "Key": filename, "RequestPayer":'requester'
+            "Bucket": BUCKET_NAME, "Key": filename, "RequestPayer": 'requester'
         }
     )
     if not dryrun:
-        print('Requesting "{}" (costs money!)'.format(filename))
+        logger.info('Requesting "{}" (costs money!)'.format(filename))
         request = requests.get(url, stream=True)
         response_iter = request.iter_content(chunk_size=chunk_size)
-        print("\t Writing {}".format(outfile))
+        logger.info("\t Writing {}".format(outfile))
         with gzip.open(outfile, 'wb') as fout:
             for i, chunk in enumerate(response_iter):
                 fout.write(chunk)
                 md5.update(chunk)
     else:
-        print('Requesting "{}" (free!)'.format(filename))
-        print("\t Writing {}".format(outfile))
+        logger.info('Requesting "{}" (free!)'.format(filename))
+        logger.info("\t Writing {}".format(outfile))
     return md5.hexdigest()
+
+def default_manifest_filename():
+    return os.path.join(DIR_PDFTARS, 'arxiv-manifest.xml.gz')
+
+def get_manifest(filename=None, redownload=False):
+    """ 
+    Get the file manifest for the ArXiv
+    Parameters
+    ----------
+        redownload : bool
+            If true, forces redownload of manifest even if it exists
+    Returns
+    -------
+        file_information : list of dicts
+            each dict contains the file metadata
+    """
+    manifest_file = filename or default_manifest_filename()
+    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False)
+    manifest = gzip.open(manifest_file, 'rb').read()
+    return parse_manifest(manifest)
 
 def parse_manifest(manifest):
     """ 
@@ -130,11 +153,15 @@ def parse_manifest(manifest):
         for f in root.findall('file')
     ]
 
-def download_check_manifest_file(filename, md5_expected, savedir=TARDIR,
-                                 dryrun=False):
+def _tar_to_filename(filename):
+    return os.path.join(DIR_PDFTARS, os.path.basename(filename)) + '.gz'
+
+def download_check_tarfile(filename, md5_expected, dryrun=False, redownload=False):
     """ Download filename, check its md5sum, and form the output path """
-    outname = os.path.join(savedir, os.path.basename(filename)) + '.gz'
-    md5_downloaded = download_file(filename, outname, dryrun=dryrun)
+    outname = _tar_to_filename(filename)
+    md5_downloaded = download_file(
+        filename, outname, dryrun=dryrun, redownload=redownload
+    )
     
     if not dryrun:
         if md5_expected != md5_downloaded:
@@ -145,17 +172,33 @@ def download_check_manifest_file(filename, md5_expected, savedir=TARDIR,
 
     return outname
 
+def download_check_tarfiles(list_of_fileinfo, dryrun=False):
+    """
+    Download tar files from the ArXiv manifest and check that their MD5sums
+    match
+
+    Parameters
+    ----------
+        list_of_fileinfo : list
+            Some elements of results of get_manifest
+        (optional)
+        dryrun : bool
+            If True, only log activity
+    """
+    for fileinfo in list_of_fileinfo:
+        download_check_tarfile(fileinfo['filename'], fileinfo['md5sum'], dryrun=dryrun)
+
 def _call(cmd, dryrun=False, debug=False):
     """ Spawn a subprocess and execute the string in cmd """
     if dryrun:
-        print(cmd)
+        logger.info(cmd)
         return 0
     else:
         return subprocess.check_call(
             shlex.split(cmd), stderr=None if debug else open(os.devnull, 'w')
         )
 
-def _make_pathname(filename, savedir=OUTDIR):
+def _make_pathname(filename):
     """ 
     Make filename path for text document, sorted like on arXiv servers.
     Parameters
@@ -163,92 +206,82 @@ def _make_pathname(filename, savedir=OUTDIR):
         filename : str
             string filename of arXiv article
         (optional)
-        savedir : str
-            the directory in which to store the file
     Returns
     -------
         pathname : str
             pathname in which to store the article following
             * Old ArXiv IDs: e.g. hep-ph0001001.txt returns
-                savedir/hep-ph/0001/hep-ph0001001.txt
+                DIR_PDFTARS/hep-ph/0001/hep-ph0001001.txt
             * New ArXiv IDs: e.g. 1501.13851.txt returns
-                savedir/arxiv/1501/1501.13851.txt
+                DIR_PDFTARS/arxiv/1501/1501.13851.txt
     """
     basename = os.path.basename(filename)
     fname = os.path.splitext(basename)[0]
     if '.' in fname:  # new style ArXiv ID
         yearmonth = fname.split('.')[0]
-        return os.path.join(savedir, 'arxiv', yearmonth, basename)
+        return os.path.join(DIR_FULLTEXT, 'arxiv', yearmonth, basename)
     # old style ArXiv ID
     cat, aid = re.split(r'(\d+)', fname)[:2]
     yearmonth = aid[:4]
-    return os.path.join(savedir, cat, yearmonth, basename)
+    return os.path.join(DIR_FULLTEXT, cat, yearmonth, basename)
 
 
-def _id_to_txtpath(aid, savedir=OUTDIR):
-    fname = aid
-    if '.' in aid:  # new style ArXiv ID
-        yearmonth = aid.split('.')[0]
-        return os.path.join(savedir, 'arxiv', yearmonth, fname)+'.txt'
-    # old style ArXiv ID
-    cat, aid = re.split(r'(\d+)', aid)[:2]
-    yearmonth = aid[:4]
-    return os.path.join(savedir, cat, yearmonth, fname)+'.txt'
-
-
-def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
-                          debug=False, processes=1):
+def process_tarfile(fileinfo, pdfnames=None, dryrun=False, debug=False, processes=1):
     """
     Download and process one of the tar files from the ArXiv manifest.
     Download, unpack, and spawn the Docker image for converting pdf2text.
     It will only try to download the file if it does not already exist.
 
-    The tar file will be stored in OUTDIR/<fileinfo[filename](tar)> and the
+    The tar file will be stored in DIR_FULLTEXT/<fileinfo[filename](tar)> and the
     resulting arXiv articles will be stored in the subdirectory
-    OUTDIR/arxiv/<yearmonth>/<aid>.txt for old style arXiv IDs and
-    OUTDIR/<category>/<yearmonth>/<aid>.txt for new style arXiv IDs.
+    DIR_FULLTEXT/arxiv/<yearmonth>/<aid>.txt for old style arXiv IDs and
+    DIR_FULLTEXT/<category>/<yearmonth>/<aid>.txt for new style arXiv IDs.
 
     Parameters
     ----------
         fileinfo : dict
             dictionary of file information from parse_manifest
         (optional)
-        savedir : str
-            directory in which to store saved tar files
-        outdir : str
-            directory in which to store processed text from pdfs
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
         debug : bool
             Silence stderr of Docker _call if debug is False
     """
     filename = fileinfo['filename']
     md5sum = fileinfo['md5sum']
 
-    file0 = _id_to_txtpath(fileinfo['first_item'], outdir)
-    file1 = _id_to_txtpath(fileinfo['last_item'], outdir)
-
-    if os.path.exists(file0) and os.path.exists(file1):
-        print('Tar file appears processed, skipping {}...'.format(filename))
+    if check_if_any_processed(fileinfo):
+        logger.info('Tar file appears processed, skipping {}...'.format(filename))
         return
 
-    print('Processing tar "{}" ...'.format(filename))
-    outname = download_check_manifest_file(filename, md5sum, savedir,
-                                           dryrun=dryrun)
-    # unpack tar file
-    cmd = 'tar --one-top-level -C {} -xf {}'.format(savedir, outname)
-    _call(cmd, dryrun)
-    basename = os.path.splitext(os.path.basename(filename))[0]
-    pdfdir = os.path.join(savedir, basename, basename.split('_')[2])
+    logger.info('Processing tar "{}" ...'.format(filename))
+    process_tarfile_inner(filename, pdfnames=None, processes=processes, dryrun=dryrun)
 
-    # Run docker image to convert pdfs in tardir into *.txt
-    cmd = 'docker run --rm -v {}:/pdfs fulltext {}'.format(pdfdir, processes)
-    _call(cmd, dryrun, debug)
+def process_tarfile_inner(filename, pdfnames=None, processes=1, dryrun=False):
+    outname = _tar_to_filename(filename)
+
+    if not os.path.exists(outname):
+        logger.error('Tarfile from manifest not found {}, skipping...'.format(outname))
+        return
+
+    # unpack tar file
+    if pdfnames:
+        namelist = ' '.join(pdfnames)
+        cmd = 'tar --one-top-level -C {} -xf {} {}'.format(DIR_PDFTARS, outname, namelist)
+    else:
+        cmd = 'tar --one-top-level -C {} -xf {}'.format(DIR_PDFTARS, outname)
+    _call(cmd, dryrun)
+
+    basename = os.path.splitext(os.path.basename(filename))[0]
+    pdfdir = os.path.join(DIR_PDFTARS, basename, basename.split('_')[2])
+
+    # Run fulltext to convert pdfs in tardir into *.txt
+    converts = fulltext.convert_directory_parallel(pdfdir, processes=processes)
 
     # move txt into final file structure
     txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
     for tf in txtfiles:
-        mvfn = _make_pathname(tf, outdir)
+        mvfn = _make_pathname(tf)
         dirname = os.path.dirname(mvfn)
         if not os.path.exists(dirname):
             _call('mkdir -p {}'.format(dirname, dryrun))
@@ -257,47 +290,9 @@ def download_and_pdf2text(fileinfo, savedir=TARDIR, outdir=OUTDIR, dryrun=False,
             shutil.move(tf, mvfn)
 
     # clean up pdfs
-    _call('rm -rf {}'.format(os.path.join(savedir, basename)), dryrun)
+    _call('rm -rf {}'.format(os.path.join(DIR_PDFTARS, basename)), dryrun)
 
-def get_manifest(savedir=TARDIR, redownload=False):
-    """ 
-    Get the file manifest for the ArXiv
-    Parameters
-    ----------
-        redownload : bool
-            If true, forces redownload of manifest even if it exists
-    Returns
-    -------
-        file_information : list of dicts
-            each dict contains the file metadata
-    """
-    manifest_file = os.path.join(savedir, 'arxiv-manifest.xml.gz')
-    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload,
-                        dryrun=False)
-    manifest = gzip.open(manifest_file, 'rb').read()
-    return parse_manifest(manifest)
-
-def download_manifest_files(list_of_fileinfo, savedir=TARDIR, dryrun=False):
-    """
-    Download tar files from the ArXiv manifest and check that their MD5sums
-    match
-    Parameters
-    ----------
-        list_of_fileinfo : list
-            Some elements of results of get_manifest
-        (optional)
-        savedir : str
-            Directory in which tar files will be saved
-        dryrun : bool
-            If True, only print activity
-    """
-    for fileinfo in list_of_fileinfo:
-        download_check_manifest_file(fileinfo['filename'], fileinfo['md5sum'],
-                                     savedir, dryrun)
-
-def download_and_process_manifest_files(list_of_fileinfo, processes=1,
-                                        savedir=TARDIR, outdir=OUTDIR,
-                                        dryrun=False):
+def process_manifest_files(list_of_fileinfo, processes=1, dryrun=False):
     """
     Download PDFs from the ArXiv AWS S3 bucket and convert each pdf to text
     Parameters. If files are already downloaded, it will only process them.
@@ -308,47 +303,51 @@ def download_and_process_manifest_files(list_of_fileinfo, processes=1,
         processes : int
             number of paralell workers to spawn (roughly as many CPUs as you have)
         dryrun : bool
-            If True, only print activity
+            If True, only log activity
     """
     for fileinfo in list_of_fileinfo:
-        download_and_pdf2text(
-            fileinfo, savedir=savedir, outdir=outdir,
-            dryrun=dryrun, processes=processes
-        )
+        process_tarfile(fileinfo, dryrun=dryrun, processes=processes)
 
-def check_if_any_processed(fileinfo, savedir=TARDIR, outdir=OUTDIR):
-    first = _make_pathname(fileinfo['first_item']+'.txt', outdir)
-    last = _make_pathname(fileinfo['last_item']+'.txt', outdir)
+def check_if_any_processed(fileinfo):
+    """
+    Spot check a tarfile to see if the pdfs have been converted to text,
+    given an element of the s3 manifest
+    """
+    first = _make_pathname(fileinfo['first_item']+'.txt')
+    last = _make_pathname(fileinfo['last_item']+'.txt')
     return os.path.exists(first) and os.path.exists(last)
 
-def generate_file_index(manifest, savedir=TARDIR, outdir=OUTDIR):
+def generate_tarfile_indices(manifest):
     """
-    Go through the manifest and check that every PDF has a cooresponding txt
-    files. This is actully rather slow, so it is a separate function.
+    Go through the manifest and for every tarfile, get a list of the PDFs
+    that should be contained within it. This is a separate function because
+    even checking the tars is rather slow.
 
     Returns
     -------
     index : dictionary
         keys: tarfile, values: list of pdfs
     """
-    out = {}
+    index = {}
 
     for fileinfo in manifest:
         name = fileinfo['filename']
-        print("Indexing {}...".format(name))
-        tarname = os.path.join(savedir, os.path.basename(name))+'.gz'
+        logger.info("Indexing {}...".format(name))
+
+        tarname = os.path.join(DIR_PDFTARS, os.path.basename(name))+'.gz'
         files = [i for i in tarfile.open(tarname).getnames() if i.endswith('.pdf')]
 
-        out[name] = files
-    return out
+        index[name] = files
+    return index
 
-def check_file_index(index):
+def check_missing_txt_files(index):
     """
-    Use the index file to check which pdf->txt conversions are outstanding.
+    Use the index file from `generate_tarfile_indices` to check which pdf->txt
+    conversions are outstanding.
     """
     missing = defaultdict(list)
     for tar, pdflist in index.items():
-        print("Checking {}...".format(tar))
+        logger.info("Checking {}...".format(tar))
         for pdf in pdflist:
             txt = _make_pathname(pdf).replace('.pdf', '.txt')
 
@@ -357,35 +356,30 @@ def check_file_index(index):
 
     return missing
 
-def rerun_missing(tar, names, savedir=TARDIR,  outdir=OUTDIR, dryrun=False,
-        debug=False, processes=1):
-    outname = os.path.join(savedir, os.path.basename(tar)) + '.gz'
-    # unpack tar file
-    cmd = 'tar --one-top-level -C {} -xf {} {}'.format(savedir, outname, ' '.join(names))
-    _call(cmd, dryrun)
-    basename = os.path.splitext(os.path.basename(tar))[0]
-    pdfdir = os.path.join(savedir, basename, basename.split('_')[2])
+def rerun_missing(missing, processes=1):
+    """
+    Use the output of `check_missing_txt_files` to attempt to rerun the text
+    files which are missing from the conversion. There are various reasons
+    that they can fail.
+    """
+    sort = list(reversed(
+        sorted([(k, v) for k, v in missing.items()], key=lambda x: len(x[1]))
+    ))
 
-    # Run docker image to convert pdfs in tardir into *.txt
-    cmd = 'docker run --rm -v {}:/pdfs fulltext {}'.format(pdfdir, processes)
-    _call(cmd, dryrun, debug)
-
-    # move txt into final file structure
-    txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
-    for tf in txtfiles:
-        mvfn = _make_pathname(tf, outdir)
-        dirname = os.path.dirname(mvfn)
-        if not os.path.exists(dirname):
-            _call('mkdir -p {}'.format(dirname, dryrun))
-
-        if not dryrun:
-            shutil.move(tf, mvfn)
-
-    # clean up pdfs
-    _call('rm -rf {}'.format(os.path.join(savedir, basename)), dryrun)
-
-def rerun_missing_all(missing, processes=1):
-    sort = list(reversed(sorted([(k, v) for k, v in missing.items()], key=lambda x: len(x[1]))))
     for tar, names in sort:
-        print("Running {} ({} to do)...".format(tar, len(names)))
-        rerun_missing(tar, names, processes=processes)
+        logger.info("Running {} ({} to do)...".format(tar, len(names)))
+        process_tarfile_inner(tar, pdfnames=names, processes=processes)
+
+def process_missing(manifest, processes=1):
+    """
+    Do the full process of figuring what is missing and running them
+    """
+    indexfile = os.path.join(DIR_PDFTARS, 'manifest-index.json')
+
+    if not os.path.exists(indexfile):
+        index = generate_tarfile_indices(manifest)
+        json.dump(index, open(indexfile, 'w'))
+
+    index = json.load(open(indexfile))
+    missing = check_missing_txt_files(index)
+    rerun_missing(missing, processes=processes)
