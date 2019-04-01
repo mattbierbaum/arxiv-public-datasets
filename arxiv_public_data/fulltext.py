@@ -3,6 +3,7 @@ import re
 import sys
 import glob
 import shlex
+from functools import partial
 
 from multiprocessing import Pool
 from subprocess import check_call, CalledProcessError, TimeoutExpired, PIPE
@@ -159,10 +160,13 @@ def fulltext(pdffile: str, timelimit: int=TIMELIMIT):
     if not os.path.isfile(pdffile):
         raise FileNotFoundError(pdffile)
 
+    if os.stat(pdffile).st_size == 0:  # file is empty
+        raise RuntimeError('"{}" is an empty file'.format(pdffile))
+
     try:
         output = run_pdftotext(pdffile, timelimit=timelimit)
         #output = run_pdf2txt(pdffile, timelimit=timelimit)
-    except (TimeoutExpired, CalledProcessError) as e:
+    except (TimeoutExpired, CalledProcessError, RuntimeError) as e:
         output = run_pdf2txt(pdffile, timelimit=timelimit)
         #output = run_pdftotext(pdffile, timelimit=timelimit)
 
@@ -219,7 +223,7 @@ def sorted_files(globber: str):
     return [f[-1] for f in allfiles]
 
 
-def convert_directory(path):
+def convert_directory(path: str, timelimit: int=TIMELIMIT):
     """
     Convert all pdfs in a given `path` to full plain text. For each pdf, a file
     of the same name but extension .txt will be created. If that file exists,
@@ -252,7 +256,7 @@ def convert_directory(path):
         # we don't want this function to stop half way because of one failed
         # file so just charge onto the next one
         try:
-            text = fulltext(pdffile)
+            text = fulltext(pdffile, timelimit)
             with open(txtfile, 'w') as f:
                 f.write(text)
         except Exception as e:
@@ -263,7 +267,7 @@ def convert_directory(path):
         outlist.append(pdffile)
     return outlist
 
-def convert_directory_parallel(path, processes):
+def convert_directory_parallel(path: str, processes: int, timelimit: int=TIMELIMIT):
     """
     Convert all pdfs in a given `path` to full plain text. For each pdf, a file
     of the same name but extension .txt will be created. If that file exists,
@@ -286,20 +290,20 @@ def convert_directory_parallel(path, processes):
     log.info('Found: {} pdfs'.format(len(pdffiles)))
 
     pool = Pool(processes=processes)
-    result = pool.map(convert_safe, pdffiles)
+    result = pool.map(partial(convert_safe, timelimit=timelimit), pdffiles)
     pool.close()
     pool.join()
 
 
-def convert_safe(pdffile):
+def convert_safe(pdffile: str, timelimit: int=TIMELIMIT):
     """ Conversion function that never fails """
     try:
-        convert(pdffile)
+        convert(pdffile, timelimit=timelimit)
     except Exception as e:
         log.error('File conversion failed for {}: {}'.format(pdffile, e))
 
 
-def convert(path: str, skipconverted=True) -> str:
+def convert(path: str, skipconverted=True, timelimit: int=TIMELIMIT) -> str:
     """
     Convert a single PDF to text.
 
@@ -324,7 +328,7 @@ def convert(path: str, skipconverted=True) -> str:
         return outpath
 
     try:
-        content = fulltext(path)
+        content = fulltext(path, timelimit)
         with open(outpath, 'w') as f:
             f.write(content)
     except Exception as e:
