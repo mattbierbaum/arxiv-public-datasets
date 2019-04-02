@@ -69,12 +69,12 @@ def citation_list_inner(articles):
     cites = {}
     for i, article in enumerate(articles):
         if i > 0 and i % 1000 == 0:
-            print('Completed: {}'.format(i))
+            log.info('Completed {} articles'.format(i))
         try:
             refs = extract_references(article)
             cites[path_to_id(article)] = refs
         except:
-            print("Error in {}".format(article))
+            log.error("Error in {}".format(article))
             continue
     return cites
 
