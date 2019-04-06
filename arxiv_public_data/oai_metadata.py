@@ -166,7 +166,9 @@ def check_xml_errors(root):
 
 def find_default_locations():
     outfile = os.path.join(DIR_BASE, 'arxiv-metadata-oai-*.json.gz')
-    resume = os.path.join(DIR_BASE, 'arxiv-metadata-oai-*.json.gz-resumptionToken.txt')
+    resume = os.path.join(
+        DIR_BASE, 'arxiv-metadata-oai-*.json.gz-resumptionToken.txt'
+    )
     fn_outfile = sorted(glob.glob(outfile))
     fn_resume = sorted(glob.glob(resume))
 
@@ -195,7 +197,9 @@ def all_of_arxiv(outfile=None, resumptionToken=None, autoresume=True):
     outfile = (
         outfile or # user-supplied
         find_default_locations() or # already in progress 
-        os.path.join(DIR_BASE, 'arxiv-metadata-oai-{}.json.gz'.format(date)) # new file
+        os.path.join(
+            DIR_BASE, 'arxiv-metadata-oai-{}.json.gz'.format(date)
+        ) # new file
     )
 
     directory = os.path.split(outfile)[0]
@@ -255,7 +259,8 @@ def load_metadata(infile=None):
             list of dicts, each of which contains the metadata attributes of
             the ArXiv articles
     """
-    with gzip.open(infile, 'rt', encoding='utf-8') as fin:
+    fname = infile or find_default_locations()
+    with gzip.open(fname, 'rt', encoding='utf-8') as fin:
         return [json.loads(line) for line in fin.readlines()]
 
 def hash_abstracts(metadata):
