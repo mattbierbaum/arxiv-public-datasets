@@ -9,6 +9,7 @@ import pickle
 import numpy as np
 
 from arxiv_public_data.config import DIR_OUTPUT, LOGGER
+from arxiv_public_data.embeddings.util import batch_fulltext
 
 logger = LOGGER.getChild('embds')
 
@@ -17,7 +18,7 @@ try:
     import tensorflow_hub as hub
     import sentencepiece as spm
 except ImportError as e:
-    logger.info("This module requires 'tensorflow', 'tensorflow-hub', and"
+    logger.warn("This module requires 'tensorflow', 'tensorflow-hub', and"
                 "'sentencepiece'\n"
                 'Please install these modules to use tf_hub.py')
 
@@ -31,26 +32,21 @@ ELMO_MODULE_KWARGS = dict(trainable=True)
 ELMO_DICTKEY = 'default'
 
 DIR_EMBEDDING = os.path.join(DIR_OUTPUT, 'embeddings')
-if not os.exists(DIR_EMBEDDING):
+if not os.path.exists(DIR_EMBEDDING):
     os.mkdir(DIR_EMBEDDING)
 
-def elmo_strings(strings, filename, batchsize=32):
+def elmo_strings(batches, filename, batchsize=32):
     """
     Compute and save vector embeddings of lists of strings in batches
     Parameters
     ----------
-        strings : list(str)
-            list of strings to be embedded
+        batches : iterable of strings to be embedded
         filename : str
             filename to store embeddings            
         (optional)
         batchsize : int
             size of batches
     """
-    batches = np.array_split(
-        np.array(strings, dtype='object'), len(strings)//batchsize
-    )
-
     g = tf.Graph()
     with g.as_default():
         module = hub.Module(ELMO_URL, **ELMO_MODULE_KWARGS)
@@ -92,13 +88,12 @@ def process_to_IDs_in_sparse_format(sp, sentences):
     indices=[[row,col] for row in range(len(ids)) for col in range(len(ids[row]))]
     return (values, indices, dense_shape)
 
-def universal_sentence_encoder_lite(strings, filename, spm_path, batchsize=32):
+def universal_sentence_encoder_lite(batches, filename, spm_path, batchsize=32):
     """
     Compute and save vector embeddings of lists of strings in batches
     Parameters
     ----------
-        strings : list(str)
-            list of strings to be embedded
+        batches : iterable of strings to be embedded
         filename : str
             filename to store embeddings            
         spm_path : str
@@ -107,9 +102,6 @@ def universal_sentence_encoder_lite(strings, filename, spm_path, batchsize=32):
         batchsize : int
             size of batches
     """
-    batches = np.array_split(
-        np.array(strings, dtype='object'), len(strings)//batchsize
-    )
     sp = spm.SentencePieceProcessor()
     sp.Load(spm_path)
 
@@ -145,54 +137,49 @@ def universal_sentence_encoder_lite(strings, filename, spm_path, batchsize=32):
             with open(filename, 'ab') as fout:
                     pickle.dump(emb, fout)
 
-def batch_fulltext():
-    pass
-
-def load_embeddings(filename):
-    """
-    Loads vector embeddings
-    Parameters
-    ----------
-        filename : str
-            path to vector embeddings saved by `create_save_embeddings`
-    Returns
-    -------
-        embeddings : array_like
-    """
-    out = []
-    with open(filename, 'rb') as fin:
-        while True:
-            try:
-                out.extend(pickle.load(fin))
-            except EOFError as e:
-                break 
-    return np.array(out)
-
-def create_save_embeddings(strings, filename, encoder, encoder_args=(),
-                           encoder_kwargs={}, SAVEDIR=DIR_EMBEDDING):
+def create_save_embeddings(batches, filename, encoder, headers=[], encoder_args=(),
+                           encoder_kwargs={}, savedir=DIR_EMBEDDING):
     """
     Create vector embeddings of strings and save them to filename
     Parameters
     ----------
-        strings: list(str)
+        batches : iterator of strings
         filename: str
             embeddings will be saved in DIR_EMBEDDING/embeddings/filename
-    Usage
-    -----
-    Universal Sentence Encoder Lite:
+        encoder : function(batches, savename, *args, **kwargs)
+            encodes strings in batches into vectors and saves them
+        (optional)
+        headers : list of things to save in embeddings file first
+
+    Examples 
+    --------
+    # For list of strings, create batched numpy array of objects
+    batches = np.array_split(
+        np.array(strings, dtype='object'), len(strings)//batchsize
+    )
+    headers = []
+
+    # For the fulltext which cannot fit in memory, use `util.batch_fulltext`
+    md_index, all_ids, batch_gen = batch_fulltext()
+    headers = [md_index, all_ids]
+
+    # Universal Sentence Encoder Lite:
     spm_path = get_sentence_piece_model()
-    create_save_embeddings(strings, filename, 
-                           universal_sentence_encoder_lite,
-                           (spm_path,), encoder_kwargs=dict(batchsize=512))
+    create_save_embeddings(batches, filename, universal_sentence_encoder_lite,
+                           headers=headers, encoder_args=(spm_path,))
 
-    ELMO:
-    create_save_embeddings(strings, filename, elmo_strings,
-                           encoder_kwargs=dict(batchsize=64))
+    # ELMO:
+    create_save_embeddings(strings, filename, elmo_strings, headers=headers)
     """
-    filepath = os.path.join(DIR_EMBEDDING, "embeddings")
-    if not os.path.exists(filepath):
-        os.makedirs(filepath)
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
 
-    logger.info("Saving embeddings to {}".format(os.path.join(filepath, filename)))
-    encoder(strings, os.path.join(filepath, filename), *encoder_args, 
+    savename = os.path.join(savedir, filename)
+
+    with open(savename, 'ab') as fout:
+        for h in headers:
+            pickle.dump(h, fout)
+
+    logger.info("Saving embeddings to {}".format(savename))
+    encoder(batches, savename, *encoder_args, 
             **encoder_kwargs)
