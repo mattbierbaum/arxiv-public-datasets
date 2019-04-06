@@ -128,7 +128,9 @@ def get_manifest(filename=None, redownload=False):
             each dict contains the file metadata
     """
     manifest_file = filename or default_manifest_filename()
-    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False)
+    md5 = download_file(
+        S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False
+    )
     manifest = gzip.open(manifest_file, 'rb').read()
     return parse_manifest(manifest)
 
