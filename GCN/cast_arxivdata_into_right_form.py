@@ -230,14 +230,13 @@ def main():
 
     #Save data
     dirname = 'data'
-    vector_type = 'title'
     save_data(nodes_int, dirname, 'title', title_vec_train, title_vec_test, title_vecs, G_sub)
     save_data(nodes_int, dirname, 'abstract', abstract_vec_train, abstract_vec_test, abstract_vecs, G_sub)
 
     #Combine title and abstract vecs
     title_vecs = np.concatenate((title_vecs, abstract_vecs), axis=1)
     title_vec_train, title_vec_test = title_vecs[:cutoff1], title_vecs[cutoff2:]
-    save_data(nodes_int, dirname, 'title', title_vec_train, title_vec_test, title_vecs, G_sub)
+    save_data(nodes_int, dirname, 'title-abstract', title_vec_train, title_vec_test, title_vecs, G_sub)
 
     return
 

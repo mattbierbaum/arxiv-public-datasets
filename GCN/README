@@ -3,7 +3,10 @@ from. I added "cast_arxiv....py", which puts the arXiv data in the right form. I
 arxiv data from various directories. Specifically,
 
 line 190: grabs the citation.json.
-line 211: grabs the vector embedding for the title, abstract, 
+line 211: grabs the vector embeddings for the titles and abstract (didn't implement full text
+yet). 
+
+These will have to be edited.
 
 I also added the GCN_classification file, which simply calls the trainer.py (which comes from
 Kipf's github). It also dumps the output of the classification into the results/ directory. See
