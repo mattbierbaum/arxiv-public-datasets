@@ -16,11 +16,11 @@ def main():
 
     #abstract vectors
     print('\n Staring abstract vectors')
-    os.system('python3 train.py --dataset arXiv-abstract --epochs ' + str(epochs))
+    os.system('python train.py --dataset arXiv-abstract --epochs ' + str(epochs))
     
     #title and abstracts
     print('\n Starting title and abstract vectors')
-    os.system('python3 train.py --dataset arXiv-title-abstract -- epochs ' + str(epochs))
+    os.system('python train.py --dataset arXiv-title-abstract -- epochs ' + str(epochs))
     
     return
     
