@@ -11,12 +11,15 @@ def main():
     epochs = 200
     
     #title vectors --- see the train.py file for other command file arguments
-    os.system('python3 train.py --dataset arXiv-title --epochs ' + str(epochs))
-    
+    print('Starting title vectors')
+    os.system('python train.py --dataset arXiv-title --epochs ' + str(epochs))
+
     #abstract vectors
+    print('\n Staring abstract vectors')
     os.system('python3 train.py --dataset arXiv-abstract --epochs ' + str(epochs))
     
     #title and abstracts
+    print('\n Starting title and abstract vectors')
     os.system('python3 train.py --dataset arXiv-title-abstract -- epochs ' + str(epochs))
     
     return
