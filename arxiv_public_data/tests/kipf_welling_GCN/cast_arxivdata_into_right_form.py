@@ -180,8 +180,8 @@ def save_data(nodes_int, dirname,vector_type, vector_train, vector_test, vector,
                                 #Main
 #-----------------------------------------------------------------------
 
+if __name__ == "__main__":
 
-def main():
 
     N = 10**2  #size of subgraph to be used (using a subraph during testing phase)
 
@@ -192,6 +192,7 @@ def main():
     q = json.load(gzip.open(fname, 'rt', encoding='utf-8'))
     G = ia.makegraph(q)
 
+    
     #Select subgraph if specified
     if N != 0:
         comps = nx.weakly_connected_components(G)
@@ -209,17 +210,22 @@ def main():
     print('Loading graph took ' + str((t2-t1)/60.0) + ' mins')
 
 
-    #Feature and label matrices
+    #Load features
     t1 = time.time()
-    dirname = '/home/kokeeffe/research/arxiv-public-datasets/arxiv-data/embeddings'
+    dirname = '/home/kokeeffe/research/arxiv-public-datasets/arxiv-data/output/embeddings'
     title_vecs = load_titles(G, nodes_string, dirname)
     abstract_vecs = load_abstracts(G, nodes_string, dirname)
     #fulltext_vecs = load_fulltext(G, nodes_string, dirname)
+    
+    
+    #Load labels
+    dirname = '/home/kokeeffe/research/arxiv-public-datasets/arxiv-data'
     labels_cat = load_labels(nodes_string, dirname)
     t2 = time.time()
     print( 'Loading features & labels took ' + str((t2-t1)/60.0) + ' mins')
+    
 
-    #Split into test & train & ulabeled portion
+    #Split into test & train & unlabeled portion
     #For now, I'll assume that nothing is unlabeled
     #That means cutoff1 and cutoff2 are the same
     cutoff1 = int(0.9*title_vecs.shape[0]) 
@@ -229,17 +235,14 @@ def main():
     #fulltext_vec_train, fulltext_vec_test = fulltext_vecs[:cutoff1], fulltext_vecs[cutoff2:]
     labels_train, labels_test = labels_cat[:cutoff1], labels_cat[cutoff2:]
 
+    
     #Save data
     dirname = 'data'
     save_data(nodes_int, dirname, 'title', title_vec_train, title_vec_test, title_vecs, G_sub)
     save_data(nodes_int, dirname, 'abstract', abstract_vec_train, abstract_vec_test, abstract_vecs, G_sub)
 
+    
     #Combine title and abstract vecs
     title_vecs = np.concatenate((title_vecs, abstract_vecs), axis=1)
     title_vec_train, title_vec_test = title_vecs[:cutoff1], title_vecs[cutoff2:]
     save_data(nodes_int, dirname, 'title-abstract', title_vec_train, title_vec_test, title_vecs, G_sub)
-
-    return
-
-if __name__ == "__main__":
-    main()

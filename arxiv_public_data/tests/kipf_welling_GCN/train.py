@@ -4,9 +4,9 @@ from __future__ import print_function
 import time
 import tensorflow as tf
 
-from gcn.utils import *
+from utils import *
 import utils as u
-from gcn.models import GCN, MLP
+from models import GCN, MLP
 
 # Set random seed
 seed = 123
