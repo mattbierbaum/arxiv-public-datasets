@@ -455,10 +455,15 @@ def parse_authorline_parallel(article_authors, n_processes=None):
              [ author3_keyname, author3_firstnames, author1_suffix ]
             ]
     """
+    logger.info(
+        'Parsing author lines for {} articles...'.format(len(article_authors))
+    )
+
     pool = Pool(n_processes)
     parsed = pool.map(_parse_article_authors, article_authors)
     outdict = {aid: auth for aid, auth in parsed}
 
     filename = os.path.join(DIR_OUTPUT, 'authors-parsed.json.gz')
+    logger.info('Saving to {}'.format(filename))
     with gzip.open(filename, 'wb') as fout:
         fout.write(json.dumps(outdict).encode('utf-8'))
