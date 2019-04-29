@@ -23,10 +23,17 @@ SOFTWARE.
 
 """Parse Authors lines to extract author and affiliation data."""
 import re
+import os
+import gzip
+import json
 from itertools import dropwhile
 from typing import Dict, Iterator, List, Tuple
+from multiprocessing import Pool, cpu_count
 
 from arxiv_public_data.tex2utf import tex2utf
+from arxiv_public_data.config import LOGGER, DIR_OUTPUT
+
+logger = LOGGER.getChild('authorsplit')
 
 PREFIX_MATCH = 'van|der|de|la|von|del|della|da|mac|ter|dem|di|vaziri'
 
@@ -417,3 +424,41 @@ def parse_authorline(authors: str) -> str:
     """
     names = parse_author_affil_utf(authors)
     return '; '.join([', '.join([q for q in n[:2] if q]) for n in names])
+
+def _parse_article_authors(article_author):
+    try:
+        return [article_author[0], parse_author_affil_utf(article_author[1])]
+    except Exception as e:
+        msg = "Author split failed for article {}".format(article_author[0])
+        logger.error(msg)
+        logger.exception(e)
+        return [article_author[0], '']
+
+def parse_authorline_parallel(article_authors, n_processes=None):
+    """
+    Parallelize `parse_authorline`
+    Parameters
+    ----------
+        article_authors : list
+            list of tuples (arXiv id, author strings from metadata)
+        (optional)
+        n_processes : int
+            number of processes
+    Returns
+    -------
+        authorsplit : list
+            list of author strings in standardized format
+            [
+             [ author1_keyname, author1_firstnames, author1_suffix, affil1, 
+                affil2 ] ,
+             [ author2_keyname, author2_firstnames, author1_suffix, affil1 ] ,
+             [ author3_keyname, author3_firstnames, author1_suffix ]
+            ]
+    """
+    pool = Pool(n_processes)
+    parsed = pool.map(_parse_article_authors, article_authors)
+    outdict = {aid: auth for aid, auth in parsed}
+
+    filename = os.path.join(DIR_OUTPUT, 'authors-parsed.json.gz')
+    with gzip.open(filename, 'wb') as fout:
+        fout.write(json.dumps(outdict).encode('utf-8'))
