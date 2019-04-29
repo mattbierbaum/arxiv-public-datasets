@@ -128,7 +128,9 @@ def get_manifest(filename=None, redownload=False):
             each dict contains the file metadata
     """
     manifest_file = filename or default_manifest_filename()
-    md5 = download_file(S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False)
+    md5 = download_file(
+        S3_PDF_MANIFEST, manifest_file, redownload=redownload, dryrun=False
+    )
     manifest = gzip.open(manifest_file, 'rb').read()
     return parse_manifest(manifest)
 
@@ -225,6 +227,45 @@ def _make_pathname(filename):
     yearmonth = aid[:4]
     return os.path.join(DIR_FULLTEXT, cat, yearmonth, basename)
 
+def process_tarfile_inner(filename, pdfnames=None, processes=1, dryrun=False,
+                          timelimit=fulltext.TIMELIMIT):
+    outname = _tar_to_filename(filename)
+
+    if not os.path.exists(outname):
+        msg = 'Tarfile from manifest not found {}, skipping...'.format(outname)
+        logger.error(msg)
+        return
+
+    # unpack tar file
+    if pdfnames:
+        namelist = ' '.join(pdfnames)
+        cmd = 'tar --one-top-level -C {} -xf {} {}'
+        cmd = cmd.format(DIR_PDFTARS, outname, namelist)
+    else:
+        cmd = 'tar --one-top-level -C {} -xf {}'.format(DIR_PDFTARS, outname)
+    _call(cmd, dryrun)
+
+    basename = os.path.splitext(os.path.basename(filename))[0]
+    pdfdir = os.path.join(DIR_PDFTARS, basename, basename.split('_')[2])
+
+    # Run fulltext to convert pdfs in tardir into *.txt
+    converts = fulltext.convert_directory_parallel(
+        pdfdir, processes=processes, timelimit=timelimit
+    )
+
+    # move txt into final file structure
+    txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
+    for tf in txtfiles:
+        mvfn = _make_pathname(tf)
+        dirname = os.path.dirname(mvfn)
+        if not os.path.exists(dirname):
+            _call('mkdir -p {}'.format(dirname, dryrun))
+
+        if not dryrun:
+            shutil.move(tf, mvfn)
+
+    # clean up pdfs
+    _call('rm -rf {}'.format(os.path.join(DIR_PDFTARS, basename)), dryrun)
 
 def process_tarfile(fileinfo, pdfnames=None, dryrun=False, debug=False, processes=1):
     """
@@ -256,41 +297,6 @@ def process_tarfile(fileinfo, pdfnames=None, dryrun=False, debug=False, processe
 
     logger.info('Processing tar "{}" ...'.format(filename))
     process_tarfile_inner(filename, pdfnames=None, processes=processes, dryrun=dryrun)
-
-def process_tarfile_inner(filename, pdfnames=None, processes=1, dryrun=False):
-    outname = _tar_to_filename(filename)
-
-    if not os.path.exists(outname):
-        logger.error('Tarfile from manifest not found {}, skipping...'.format(outname))
-        return
-
-    # unpack tar file
-    if pdfnames:
-        namelist = ' '.join(pdfnames)
-        cmd = 'tar --one-top-level -C {} -xf {} {}'.format(DIR_PDFTARS, outname, namelist)
-    else:
-        cmd = 'tar --one-top-level -C {} -xf {}'.format(DIR_PDFTARS, outname)
-    _call(cmd, dryrun)
-
-    basename = os.path.splitext(os.path.basename(filename))[0]
-    pdfdir = os.path.join(DIR_PDFTARS, basename, basename.split('_')[2])
-
-    # Run fulltext to convert pdfs in tardir into *.txt
-    converts = fulltext.convert_directory_parallel(pdfdir, processes=processes)
-
-    # move txt into final file structure
-    txtfiles = glob.glob('{}/*.txt'.format(pdfdir))
-    for tf in txtfiles:
-        mvfn = _make_pathname(tf)
-        dirname = os.path.dirname(mvfn)
-        if not os.path.exists(dirname):
-            _call('mkdir -p {}'.format(dirname, dryrun))
-
-        if not dryrun:
-            shutil.move(tf, mvfn)
-
-    # clean up pdfs
-    _call('rm -rf {}'.format(os.path.join(DIR_PDFTARS, basename)), dryrun)
 
 def process_manifest_files(list_of_fileinfo, processes=1, dryrun=False):
     """
@@ -368,7 +374,10 @@ def rerun_missing(missing, processes=1):
 
     for tar, names in sort:
         logger.info("Running {} ({} to do)...".format(tar, len(names)))
-        process_tarfile_inner(tar, pdfnames=names, processes=processes)
+        process_tarfile_inner(
+            tar, pdfnames=names, processes=processes,
+            timelimit=5 * fulltext.TIMELIMIT
+        )
 
 def process_missing(manifest, processes=1):
     """

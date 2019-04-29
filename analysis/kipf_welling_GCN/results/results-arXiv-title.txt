@@ -1,0 +1,7 @@
+Test set results:
+cost=
+2.83866
+accuracy=
+0.20000
+time=
+0.00665
