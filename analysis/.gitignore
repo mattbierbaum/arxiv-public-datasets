@@ -1,0 +1,6 @@
+figures
+*.tex
+*.pdf
+*.png
+*.pkl
+*.csv
