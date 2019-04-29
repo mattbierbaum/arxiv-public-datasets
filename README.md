@@ -3,10 +3,11 @@
 This is a repository that generates various public datasets from publically available
 data and some mild post-processing and organization. Currently, it grabs or generates:
 
-* **Article metadata** -- title, authors, category, doi, abstract, submitter
+* **Article metadata** -- title, authors string, category, doi, abstract, submitter
 * **PDFs** -- all PDFs available through arXiv bulk download
 * **Plain text** -- PDFs converted to UTF-8 encoded plain text
 * **Citation graph** -- intra-arXiv citation graph between arXiv IDs only (generated from plain text)
+* **Author string parsing** -- convert metadata author strings into standardized list of name, affiliations
 
 We are able to host certain generated portions of this dataset as released
 snapshots.  The iterations can be found under the releases tab:
@@ -39,7 +40,13 @@ directory needs to have adequate space to hold ~ 1TB of pdfs and ~ 70GB of text
 if you so choose to retrieve them:
 
     cp config.json.example config.json
-    [edit config.json]
+    [set ARXIV_DATA in config.json to your own directory]
+
+The scripts in `bin` will then create any of the three subdirectories:
+
+    $ARXIV_DATA/tarpdfs   # raw pdf files from Amazon AWS bucket
+    $ARXIV_DATA/fulltext  # .txt from raw .pdf
+    $ARXIV_DATA/output    # co-citation network, parsed author strings, etc
 
 ## Article metadata
 
@@ -86,8 +93,8 @@ the `$ARXIV_DATA` so that it will not re-download the tars.
 
     python bin/fulltext.py [OPTIONAL number_of_processes, default cpu_count]
 
-This will take many core-hours. At the time of writing, converting 1.39
-million articles required over 4000 core-hours.
+At the time of writing, converting 1.39 million articles requires over 400 core-hours 
+using two Intel Xeon E5-2600 CPUs.
 
 ## Cocitation network
 
@@ -96,3 +103,16 @@ with the directories still set up, run:
 
     python bin/cocitations.py [OPTIONAL number_of_processes, default cpu_count]
 
+The cocitation network will by default be saved in
+`$ARXIV_DATA/output/internal-citations.json.gz`.
+
+## Author string split
+
+The OAI metadata from the ArXiv features author strings as submitted by article
+authors. In order to use them in a principled way, theses strings must be parsed
+and split. To generate and save these author splittings, run:
+
+    python bin/authorsplit.py [OPTIONAL number_of_processes, default cpu_count]
+
+The split author strings will by default be saved in
+`$ARXIV_DATA/output/authors-parsed.json.gz`.
