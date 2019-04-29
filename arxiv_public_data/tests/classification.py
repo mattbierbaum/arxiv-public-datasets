@@ -6,36 +6,20 @@ Classification.py
 import os
 import json
 import gzip
-import pickle
+import json
 import numpy as np
 from datetime import datetime
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 
-from arxiv_public_data.oai_metadata import load_metadata
+from arxiv_public_data.embeddings.util import load_embeddings, fill_zeros
 import arxiv_public_data.tests.cocitation_category_feature as features
+from arxiv_public_data.config import DIR_OUTPUT, DIR_BASE, LOGGER
+from arxiv_public_data.oai_metadata import load_metadata
+
+logger = LOGGER.getChild('lr-classify')
 
 def loaddata(fname='data/internal-references.json.gz'):
     return json.load(gzip.open(fname, 'r'))
-
-def load_embeddings(filename):
-    """
-    Loads vector embeddings
-    Parameters
-    ----------
-        filename : str
-            path to vector embeddings saved by `create_save_embeddings`
-    Returns
-    -------
-        embeddings : array_like
-    """
-    out = []
-    with open(filename, 'rb') as fin:
-        while True:
-            try:
-                out.extend(pickle.load(fin))
-            except EOFError as e:
-                break 
-    return np.array(out)
 
 def in_top_n(prob, target, n=5):
     intopn = 0
@@ -56,13 +40,15 @@ def train_test(model, X_train, y_train, X_test, y_test):
     return dict(top1=prec, top3=top3, top5=top5, loglikelihood=loglikelihood,
                 perplexity=perplexity)
 
-EMBDIR = '/pool0/arxiv/embeddings'
+EMBDIR = os.path.join(DIR_OUTPUT, 'embeddings')
 usel_abstract = os.path.join(EMBDIR, 'abstract-embedding-usel-2019-03-19.pkl')
 usel_title = os.path.join(EMBDIR, 'title-embedding-usel-2019-03-19.pkl')
-md_file = ('/home/colin/work/arxiv-public-datasets/data/'
-           'oai-arxiv-metadata-2019-03-01.json.gz')
-adj_file = ('/home/colin/work/arxiv-public-datasets/data/'
-            'internal-references-pdftotext.json.gz')
+usel_fulltext = os.path.join(
+    EMBDIR, 'fulltext-embedding-usel-2-headers-2019-04-05.pkl'
+)
+
+md_file = os.path.join(DIR_BASE, 'arxiv-metadata-oai-2019-03-01.json.gz')
+adj_file = os.path.join(DIR_OUTPUT, 'internal-citations.json.gz')
 
 def maincat(name):
     if '.' in name:
@@ -108,73 +94,148 @@ if __name__ == "__main__":
     mc_train, mc_test = features.cocitation_feature(adj, ids_train, ids_test,
                                                     target_train, target_test)
 
-    #lr = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-    #                        verbose=1, max_iter=200)
-    model_kwargs = dict(loss='log', tol=1e-6, max_iter=40, alpha=1e-7,
+    model_kwargs = dict(loss='log', tol=1e-6, max_iter=50, alpha=1e-7,
                         verbose=False, n_jobs=6)
     results = {}
     
-    ## First fit on just titles
-    title_vec = load_embeddings(usel_title)
+    # JUST cocitation features
+    logger.info('Fitting cocitation vectors')
+    lr = SGDClassifier(**model_kwargs)
+    results['cocitation'] = train_test(lr, mc_train, target_train,
+                                       mc_test, target_test)
+    logger.info(results['cocitation'])
+    logger.info('cocitation vectors done!')
+
+    # JUST full text
+    fulltext_vec = fill_zeros(load_embeddings(usel_fulltext, headers=2))
+    shuffle(fulltext_vec)
+    fulltext_train = fulltext_vec[:train_size]
+    fulltext_test = fulltext_vec[train_size:]
+
+    logger.info('Fitting fulltext vectors')
+    lr = SGDClassifier(**model_kwargs)
+    results['fulltext'] = train_test(lr, fulltext_train, target_train,
+                                     fulltext_test, target_test)
+    logger.info(results['fulltext'])
+    logger.info('fulltext vectors done!')
+
+    # JUST titles
+    title_vec = load_embeddings(usel_title)['embeddings']
     shuffle(title_vec)
     title_train = title_vec[:train_size]
     title_test = title_vec[train_size:]
 
-    # Next fit on the cocitation features
-    print('Fitting cocitation vectors')
-    lr = SGDClassifier(**model_kwargs)
-    results['cocitation'] = train_test(lr, mc_train, target_train,
-                                       mc_test, target_test)
-    print(results['cocitation'])
-    print('cocitation vectors done!')
-
-    print('Fitting title vectors')
+    logger.info('Fitting title vectors')
     lr = SGDClassifier(**model_kwargs)
     results['titles'] = train_test(lr, title_train, target_train, title_test,
                                    target_test)
-    print(results['titles'])
-    print('title vectors done!')
+    logger.info(results['titles'])
+    logger.info('title vectors done!')
     
-    ### Next fit on just the abstracts
-    abstract_vec = load_embeddings(usel_abstract)
+    # JUST abstracts
+    abstract_vec = load_embeddings(usel_abstract)['embeddings']
     shuffle(abstract_vec)
     abstract_train = abstract_vec[:train_size]
     abstract_test = abstract_vec[train_size:]
 
-    print('Fitting abstract vectors')
+    logger.info('Fitting abstract vectors')
     lr = SGDClassifier(**model_kwargs)
     results['abstracts'] = train_test(lr, abstract_train, target_train,
                                       abstract_test, target_test)
-    print(results['abstracts'])
-    print('abstract vectors done!')
-    
-    # Now on the combination of titles and abstracts
-    title_abstract_train = np.concatenate([title_train, abstract_train], axis=1)
-    del title_train
-    title_abstract_test = np.concatenate([title_test, abstract_test], axis=1)
-    del title_test
-    print('Fitting abstract + title vectors')
-    results['abstract+titles'] = train_test(
-        lr, title_abstract_train, target_train, title_abstract_test, target_test
-    )
-    print(results['abstract+titles'])
-    print('abstract + title vectors done!')
-
-        # Next fit on the cocitation features
-    co_ti_ab_train = np.concatenate([title_abstract_train, mc_train], axis=1)
-    del title_abstract_train
-    co_ti_ab_test = np.concatenate([title_abstract_test, mc_test], axis=1)
-    del title_abstract_test
-    
-    print('Fitting title+abstract+cocitation vectors')
+    logger.info(results['abstracts'])
+    logger.info('abstract vectors done!')
+   
+    # ALL features
+    logger.info('Fitting all features')
     lr = SGDClassifier(**model_kwargs)
-    results['cocitation+title+abstracts'] = train_test(
-        lr, co_ti_ab_train, target_train, co_ti_ab_test, target_test
+    results['all'] = train_test(
+        lr,
+        np.concatenate(
+            [title_train, abstract_train, mc_train, fulltext_train], axis=1
+        ),
+        target_train,
+        np.concatenate(
+            [title_test, abstract_test, mc_test, fulltext_test], axis=1
+        ),
+        target_test
     )
-    print(results['cocitation+title+abstracts'])
-    print('title+abstract+cocitation vectors done!')
-    
+    logger.info(results['all'])
+    logger.info('all features done!')
+
+    #
+    # Now feature ablations (individual removals
+    #
+ 
+    # ALL - titles
+    logger.info('Fitting all - titles')
+    lr = SGDClassifier(**model_kwargs)
+    results['all - titles'] = train_test(
+        lr,
+        np.concatenate(
+            [abstract_train, mc_train, fulltext_train], axis=1
+        ),
+        target_train,
+        np.concatenate(
+            [abstract_test, mc_test, fulltext_test], axis=1
+        ),
+        target_test
+    )
+    logger.info(results['all - titles'])
+    logger.info('all - titles done!')
+
+    # ALL - abstracts
+    logger.info('Fitting all - abstracts')
+    lr = SGDClassifier(**model_kwargs)
+    results['all - abstracts'] = train_test(
+        lr,
+        np.concatenate(
+            [title_train, mc_train, fulltext_train], axis=1
+        ),
+        target_train,
+        np.concatenate(
+            [title_test, mc_test, fulltext_test], axis=1
+        ),
+        target_test
+    )
+    logger.info(results['all - abstracts'])
+    logger.info('all - abstracts done!')
+
+    # ALL - cocitation
+    logger.info('Fitting all - cocitation')
+    lr = SGDClassifier(**model_kwargs)
+    results['all - cocitation'] = train_test(
+        lr,
+        np.concatenate(
+            [title_train, abstract_train, fulltext_train], axis=1
+        ),
+        target_train,
+        np.concatenate(
+            [title_test, abstract_test, fulltext_test], axis=1
+        ),
+        target_test
+    )
+    logger.info(results['all - cocitation'])
+    logger.info('all - cocitation done!')
+
+    # ALL - fulltext
+    logger.info('Fitting all features')
+    lr = SGDClassifier(**model_kwargs)
+    results['all - fulltext'] = train_test(
+        lr,
+        np.concatenate(
+            [title_train, abstract_train, mc_train], axis=1
+        ),
+        target_train,
+        np.concatenate(
+            [title_test, abstract_test, mc_test], axis=1
+        ),
+        target_test
+    )
+    logger.info(results['all - fulltext'])
+    logger.info('all - fulltext done!')
+
+    # SAVE
     nowdate = str(datetime.now()).split()[0]
-    filename = "logistic-regression-embedding-vectors-{}.pkl".format(nowdate)
-    with open(filename, 'wb') as fout:
-        pickle.dump(results, fout)
+    filename = "logistic-regression-classification-{}.json".format(nowdate)
+    with open(os.path.join(DIR_OUTPUT, filename), 'w') as fout:
+        json.dump(results, fout)
