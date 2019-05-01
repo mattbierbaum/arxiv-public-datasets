@@ -1,10 +1,13 @@
 I cloned the GCN from https://github.com/tkipf/gcn, which is where most of the files come
-from. I added "cast_arxiv....py", which puts the arXiv data in the right form. It grabs the
-arxiv data from various directories. Specifically,
+from. 
 
-line 190: grabs the citation.json.
-line 211: grabs the vector embeddings for the titles and abstract (didn't implement full text
-yet). 
+In order to use the GCN, I need to put the arXiv data into the right format. The
+GCN_utils.py contains functions to do this; the main function in
+cast_data_into_right_form. This graphs data from various directorties. In particular,
+
+line 228: grabs the metadata
+line 236: grabs the co-citation graph
+lines 259: grabs the vectors embeddings.
 
 These will have to be edited.
 
@@ -14,6 +17,7 @@ the trainer.py file for other training options (num of epochs, etc).
 
 The GCN is a semi-supervised method, meaning some nodes are missing labels. For the subset
 of the arXiv we're looking at, we have all the labels. So, I set the unlabeld population to
-zero. This is achieved by setting cutoff1 = cutoff2 = 0.9  (line 222 in "cast_arxiv..."). See
+zero. This is achieved by setting cutoff1 = cutoff2 = 0.9  (line 275 in "cast_data..."
+function in GCN_utils). See
 the "load_data" function in the utils.py file, for how the dataset is partitioned.
 

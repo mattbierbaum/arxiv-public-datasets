@@ -13,7 +13,7 @@ def main():
     
     #Options
     data_made = False     #might want to reuse the data that's been used already
-    delete_data = True   #delete the data file after its been used
+    delete_data = True    #delete the data file after its been used
         
     #Put data into right format
     if data_made == False:
