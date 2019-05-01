@@ -127,3 +127,25 @@ def load_embeddings(filename, headers=0):
             N += 1
     out['embeddings'] = np.array(out['embeddings'])
     return out
+
+def fill_zeros(loaded_embedding):
+    """
+    Fill out zeros in the full-text embedding where full-text is missing
+    Parameters
+    ----------
+        loaded_embedding : dict
+            dict as saved from with `load_embeddings` with 2 headers
+            of the list of the metadata_index each embedding vector corresponds
+            to, the list of all article ids
+    Returns
+    -------
+        embeddings : array_like
+            vector embeddings of shape (number of articles, embedding dimension)
+    """
+    md_index = loaded_embedding['headers'][0]
+    all_ids = loaded_embedding['headers'][1]
+    vectors = loaded_embedding['embeddings']
+    output = np.zeros((len(all_ids), vectors.shape[1]))
+    for idx, v in zip(md_index, vectors):
+        output[idx,:] = v
+    return output
