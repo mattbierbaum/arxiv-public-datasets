@@ -1,7 +1,7 @@
 Test set results:
 cost=
-0.11322
+0.02744
 accuracy=
-0.90000
+1.00000
 time=
-0.00491
+0.00530
