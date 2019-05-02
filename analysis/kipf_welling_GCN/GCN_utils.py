@@ -144,7 +144,10 @@ def load_fulltext(G, m, nodes_string, dirname):
 
 
 def load_labels(nodes_string, m):
-    labels = [x['categories'] for x in m if x['id'] in nodes_string]
+    if len(nodes_string) == len(m):
+        labels = [x['categories'] for x in m]
+    else:
+        labels = [x['categories'] for x in m if x['id'] in nodes_string]
     labels_cl = clean_labels(labels)
     labels_cat = labels2categorical(labels_cl)
     return labels_cat
@@ -163,22 +166,22 @@ def save_data(nodes_int, dirname,vector_type, vector_train, vector_test, vector,
     #Save vectors
     dirname = 'data'
     fname = dirname + '/ind.arXiv-' + vector_type + '.x'
-    pkl.dump(vector_train, open(fname,'wb'))
+    pkl.dump(vector_train, open(fname,'wb'), protocol=4)
 
     fname = dirname + '/ind.arXiv-' + vector_type + '.tx'
-    pkl.dump(vector_test, open(fname,'wb'))
+    pkl.dump(vector_test, open(fname,'wb'), protocol=4)
 
     fname = dirname + '/ind.arXiv-' + vector_type + '.allx'
-    pkl.dump(vector[:cutoff2], open(fname,'wb'))
+    pkl.dump(vector[:cutoff2], open(fname,'wb'), protocol=4)
 
     fname = dirname + '/ind.arXiv-' + vector_type + '.y'
-    pkl.dump(np.array(labels_train), open(fname,'wb'))
+    pkl.dump(np.array(labels_train), open(fname,'wb'), protocol=4)
 
     fname = dirname + '/ind.arXiv-' + vector_type + '.ty'
-    pkl.dump(np.array(labels_test), open(fname,'wb'))
+    pkl.dump(np.array(labels_test), open(fname,'wb'), protocol=4)
 
     fname = dirname + '/ind.arXiv-' + vector_type + '.ally'
-    pkl.dump(np.array(labels_cat[:cutoff2]), open(fname,'wb'))
+    pkl.dump(np.array(labels_cat[:cutoff2]), open(fname,'wb'), protocol=4)
 
     test_nodes = nodes_int[cutoff2:]
     with open(dirname + '/ind.arXiv-' + vector_type + '.test.index','wt') as f:
@@ -205,7 +208,7 @@ def save_data(nodes_int, dirname,vector_type, vector_train, vector_test, vector,
     graph_dict = {}     
     for node in G_sub.nodes():
         graph_dict[node] = list(G_sub.neighbors(node))
-    pkl.dump(graph_dict, open(dirname + '/ind.arXiv-' + vector_type + '.graph', 'wb')) 
+    pkl.dump(graph_dict, open(dirname + '/ind.arXiv-' + vector_type + '.graph', 'wb'), protocol=4) 
     return
     
     
@@ -249,8 +252,8 @@ def cast_data_into_right_form(N):
     else:
         G_sub = G
         
-    nodes_string = list(G_sub.nodes())            #nodes labeled by ints
-    nodes_int = range(G_sub.number_of_nodes())    #nodes labeled in strings
+    nodes_string = np.array(G_sub.nodes())            #nodes labeled by strings
+    nodes_int = np.array(range(G_sub.number_of_nodes()))       #nodes labeled by ints
     t2 = time.time()
     print('Loading graph took ' + str((t2-t1)/60.0) + ' mins')
 
@@ -267,10 +270,22 @@ def cast_data_into_right_form(N):
     t2 = time.time()
     print( 'Loading features & labels took ' + str((t2-t1)/60.0) + ' mins')
 
-    t1 = time.time()
-    #Split into test & train & ulabeled portion
+    
+     #Split into test & train & ulabeled portion
     #For now, I'll assume that nothing is unlabeled
     #That means cutoff1 and cutoff2 are the same
+    t1 = time.time()
+   
+    #Shuffle
+    indicies = list(range(len(title_vecs)))
+    np.random.shuffle(indicies)
+    title_vecs = title_vecs[indicies]
+    abstract_vecs = abstract_vecs[indicies]
+    fulltext_vecs = fulltext_vecs[indicies] 
+    nodes_int = nodes_int[indicies]
+    nodes_string = nodes_string[indicies]
+
+    #Split
     cutoff1 = int(0.9*title_vecs.shape[0]) 
     cutoff2 = int(0.9*title_vecs.shape[0])
     title_vec_train, title_vec_test = title_vecs[:cutoff1], title_vecs[cutoff2:]

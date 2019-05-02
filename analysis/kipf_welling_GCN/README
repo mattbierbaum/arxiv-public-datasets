@@ -5,15 +5,17 @@ In order to use the GCN, I need to put the arXiv data into the right format. The
 GCN_utils.py contains functions to do this; the main function in
 cast_data_into_right_form. This graphs data from various directorties. In particular,
 
-line 228: grabs the metadata
-line 236: grabs the co-citation graph
-lines 259: grabs the vectors embeddings.
+line 228: location of metadata
+line 236: location co-citation graph
+lines 259: location of the vectors embeddings.
 
 These will have to be edited.
 
 I also added the GCN_classification file, which simply calls the trainer.py (which comes from
 Kipf's github). It also dumps the output of the classification into the results/ directory. See
-the trainer.py file for other training options (num of epochs, etc).
+the trainer.py file for other training options (num of epochs, etc). Note, I set the size of the
+validation set to zero, so when the trainer.py file is called, it spits out a validation
+accuracy of nan.
 
 The GCN is a semi-supervised method, meaning some nodes are missing labels. For the subset
 of the arXiv we're looking at, we have all the labels. So, I set the unlabeld population to

@@ -1,5 +1,6 @@
-""" Runs the Kipf-Welling GCN. Assumes the data has been prepared in the right way
-    (by running cast_arxivdata_into_right_format.py)
+""" Runs the Kipf-Welling GCN. First, I put the arxiv data into their
+    format. Then I simply call their train.py file. See README.
+        
 """
 
 import os, time
@@ -8,12 +9,14 @@ import GCN_utils as u
 
 def main():
     
-    N = 10**2   #number of nodes in graph to take
-    #N = 0      #this means take the full dataset
+    #N = 10**2       #number of nodes in graph to take  (if you want to experiment on smaller graph)
+    N = 0          #this means take the full dataset
+    epochs = 2*10**2  #number of epochs in training, used by kipf-welling https://arxiv.org/pdf/1609.02907.pdf
+
     
     #Options
     data_made = False     #might want to reuse the data that's been used already
-    delete_data = True    #delete the data file after its been used
+    delete_data = True    #delete the intermediary data files after they've been used
         
     #Put data into right format
     if data_made == False:
@@ -26,7 +29,6 @@ def main():
     
     #Then do the GCN classification
     print('\n Now starting classification')
-    epochs = 10**2
     
     #title vectors --- see the train.py file for other command file arguments
     print('Starting title vectors')
