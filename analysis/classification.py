@@ -1,6 +1,9 @@
 """
 Classification.py
 
+author: Colin Clement
+date: 2019-04-29
+
 """
 
 import os
