@@ -1,6 +1,9 @@
 """
 cocitation_category_feature.py
 
+author: Colin Clement
+date: 2019-04-29
+
 This module creates feature vectors for articles which combine co-citation and
 categories.
 
