@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pickle as pkl
 import networkx as nx
@@ -7,7 +8,7 @@ import sys
 
 from arxiv_public_data.config import LOGGER, DIR_OUTPUT
 
-SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling')
+SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling', 'data')
 
 def parse_index_file(filename):
     """Parse index file."""
