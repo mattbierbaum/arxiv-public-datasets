@@ -1,7 +1,19 @@
 # arXiv public datasets
 
-This is a repository that generates various public datasets from publically available
-data and some mild post-processing and organization. Currently, it grabs or generates:
+This project is part of a submission to an ICLR 2019 workshop, RLGM
+Representation Learning on Graphs and Manifolds. The manuscript can be found on
+[arXiv:1905.00075](https://arxiv.org/abs/1905.00075). Our primary purpose is to
+develop a set of tools to standardize and facilitate use of the arXiv as a
+dataset. Due to licensing and distribution issues, our work is primarily a set
+of scripts which builds the dataset from various public data sources. There are
+additional cleaning, organization, and  aggregation functions that it performs
+as well.
+
+This project is under development as we try to best fit the needs of the
+community. We have adopted [semver](https://semver.org/) and as such will denote
+major releases with the first numeral in the tagged version.
+
+Currently, the project grabs or generates:
 
 * **Article metadata** -- title, authors string, category, doi, abstract, submitter
 * **PDFs** -- all PDFs available through arXiv bulk download
@@ -16,6 +28,25 @@ However, the rest of it must be generated locally.
 
 The requirements to generate the datasets from this repository vary from
 dataset to dataset, but the requirements for all is:
+
+## Contributing
+
+Thank you for you interest in contributing! We welcome many forms of input --
+GitHub issues, email, pull requests to name a few. Let us know how if there are
+ways we can better present and preserve the dataset.
+
+## Citing
+
+If you wish to cite the dataset in your own work, a suggested bibtex entry is:
+
+    @misc{clement2019arxiv,
+        title={On the Use of ArXiv as a Dataset},
+        author={Colin B. Clement and Matthew Bierbaum and Kevin P. O'Keeffe and Alexander A. Alemi},
+        year={2019},
+        eprint={1905.00075},
+        archivePrefix={arXiv},
+        primaryClass={cs.IR}
+    }
 
 ## Setup on Linux
 
