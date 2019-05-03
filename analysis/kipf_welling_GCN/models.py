@@ -1,5 +1,5 @@
 from layers import *
-from metrics import *
+from metrics import *  # masked_accuracy
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
