@@ -121,6 +121,6 @@ results = "Test set results:", "cost=", "{:.5f}".format(test_cost), "accuracy=",
     
 RES_DIR = os.path.join(SAVE_DIR, 'results')
 np.savetxt(
-    os.path.join(
-        RES_DIR, 'results-' + str(FLAGS.dataset) + '.txt', results, fmt = '%s' )
+    os.path.join(RES_DIR, 'results-' + str(FLAGS.dataset) + '.txt'), 
+    results, fmt = '%s'
 )
