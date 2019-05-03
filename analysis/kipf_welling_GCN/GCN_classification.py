@@ -34,22 +34,22 @@ def main():
     #Then do the GCN classification
     logger.info('\n Now starting classification')
     
+    cmd = 'python analysis/kipf_welling_GCN/train.py --dataset arXiv-{} --epochs {}'
     #title vectors --- see the train.py file for other command file arguments
     logger.info('Starting title vectors')
-    os.system('python train.py --dataset arXiv-title --epochs ' + str(epochs))
+    os.system(cmd.format('title', epochs))
 
     #abstract vectors
-    logger.info('\n Staring abstract vectors')
-    os.system('python train.py --dataset arXiv-abstract --epochs ' + str(epochs))
+    logger.info('\n Starting abstract vectors')
+    os.system(cmd.format('abstract', epochs))
     
     #fulltext
     logger.info('\n Starting fulltext vectors')
-    os.system('python train.py --dataset arXiv-fulltext -- epochs ' + str(epochs))
+    os.system(cmd.format('fulltext', epochs))
     
     #all together
     logger.info('\n Starting all vectors')
-    os.system('python train.py --dataset arXiv-all -- epochs ' + str(epochs))
-    
+    os.system(cmd.format('all', epochs))
      
     #Delete the data I don't need
     #if delete_data == True:
