@@ -5,6 +5,9 @@ import scipy.sparse as sp
 from scipy.sparse.linalg.eigen.arpack import eigsh
 import sys
 
+from arxiv_public_data.config import LOGGER, DIR_OUTPUT
+
+SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling')
 
 def parse_index_file(filename):
     """Parse index file."""
@@ -44,14 +47,18 @@ def load_data(dataset_str):
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
-        with open("data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
+        dataset_file = os.path.join(
+            SAVE_DIR, "ind.{}.{}".format(dataset_str, names[i])
+        )
+        with open(dataset_file, 'rb') as f:
             if sys.version_info > (3, 0):
                 objects.append(pkl.load(f, encoding='latin1'))
             else:
                 objects.append(pkl.load(f))
 
     x, y, tx, ty, allx, ally, graph = tuple(objects)
-    test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset_str))
+    testfile = os.path.join(SAVE_DIR, "ind.{}.test.index".format(dataset_str))
+    test_idx_reorder = parse_index_file(testfile)
     test_idx_range = np.sort(test_idx_reorder)
 
     if dataset_str == 'citeseer':

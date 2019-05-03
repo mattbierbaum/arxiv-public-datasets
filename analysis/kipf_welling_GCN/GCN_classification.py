@@ -6,13 +6,15 @@
 import os, time
 import GCN_utils as u
 
+from arxiv_public_data.config import LOGGER, DIR_OUTPUT
+
+logger = LOGGER.getChild('GCN-classify')
+SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling')
 
 def main():
-    
-    #N = 10**2       #number of nodes in graph to take  (if you want to experiment on smaller graph)
-    N = 0          #this means take the full dataset
+    N = 10**2       #number of nodes in graph to take  (if you want to experiment on smaller graph)
+    #N = 0          #this means take the full dataset
     epochs = 2*10**2  #number of epochs in training, used by kipf-welling https://arxiv.org/pdf/1609.02907.pdf
-
     
     #Options
     data_made = False     #might want to reuse the data that's been used already
@@ -20,36 +22,38 @@ def main():
         
     #Put data into right format
     if data_made == False:
-        print('Preparing data \n ')
-        if not os.path.exists('data/'):
-            os.system('mkdir data')
-        if not os.path.exists('results'):
-            os.system('mkdir results')
+        logger.info('Preparing data \n ')
+        if not os.path.exists(SAVE_DIR):
+            os.makedirs(SAVE_DIR)
+
+        RES_DIR = os.path.join(SAVE_DIR, 'results')
+        if not os.path.exists(RES_DIR):
+            os.makedirs(RES_DIR)
         u.cast_data_into_right_form(N)
     
     #Then do the GCN classification
-    print('\n Now starting classification')
+    logger.info('\n Now starting classification')
     
     #title vectors --- see the train.py file for other command file arguments
-    print('Starting title vectors')
+    logger.info('Starting title vectors')
     os.system('python train.py --dataset arXiv-title --epochs ' + str(epochs))
 
     #abstract vectors
-    print('\n Staring abstract vectors')
+    logger.info('\n Staring abstract vectors')
     os.system('python train.py --dataset arXiv-abstract --epochs ' + str(epochs))
     
     #fulltext
-    print('\n Starting fulltext vectors')
+    logger.info('\n Starting fulltext vectors')
     os.system('python train.py --dataset arXiv-fulltext -- epochs ' + str(epochs))
     
     #all together
-    print('\n Starting all vectors')
+    logger.info('\n Starting all vectors')
     os.system('python train.py --dataset arXiv-all -- epochs ' + str(epochs))
     
      
     #Delete the data I don't need
-    if delete_data == True:
-        os.system('rm -r data/')
+    #if delete_data == True:
+    #    os.system('rm -r data/')
     
     return
     

@@ -8,6 +8,11 @@ from utils import *
 import utils as u
 from models import GCN, MLP
 
+from arxiv_public_data.config import LOGGER, DIR_OUTPUT
+
+logger = LOGGER.getChild('train-GCN')
+SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling')
+
 # Set random seed
 seed = 123
 np.random.seed(seed)
@@ -74,7 +79,6 @@ def evaluate(features, support, labels, mask, placeholders):
     outs_val = sess.run([model.loss, model.accuracy], feed_dict=feed_dict_val)
     return outs_val[0], outs_val[1], (time.time() - t_test)
 
-
 # Init variables
 sess.run(tf.global_variables_initializer())
 
@@ -115,4 +119,8 @@ print("Test set results:", "cost=", "{:.5f}".format(test_cost),
 #Save results
 results = "Test set results:", "cost=", "{:.5f}".format(test_cost), "accuracy=", "{:.5f}".format(test_acc), "time=", "{:.5f}".format(test_duration)
     
-np.savetxt('results/results-' + str(FLAGS.dataset) + '.txt', results, fmt = '%s' )
+RES_DIR = os.path.join(SAVE_DIR, 'results')
+np.savetxt(
+    os.path.join(
+        RES_DIR, 'results-' + str(FLAGS.dataset) + '.txt', results, fmt = '%s' )
+)
