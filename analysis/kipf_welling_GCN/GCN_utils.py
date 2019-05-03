@@ -46,12 +46,12 @@ def onehot(labels, label_order):
            [0, 1]])
     """
     class_labels = {}
-    for i,x in enumerate(label_order):
+    for i, x in enumerate(label_order):
         class_labels[x] = i
     
     labels_categorical = np.zeros((len(labels), len(label_order)))
     for i, label in enumerate(labels):
-        labels_categorical[i, class_labels[label]]
+        labels_categorical[i, class_labels[label]] = 1
     return labels_categorical
 
 def sync_G_with_metadata(G, m):
@@ -170,7 +170,7 @@ def cast_data_into_right_form(N):
         slicer = np.s_[:]
         G_sub = G
         
-    nodes_string = [m['id'] for m in metadata]
+    nodes_string = np.array([m['id'] for m in metadata], dtype='object')
     nodes_int = np.arange(len(G_sub))
 
     # NOTE: label nodes by shuffled index order, will match metadata index
@@ -203,7 +203,8 @@ def cast_data_into_right_form(N):
     logger.info('Finished loading fulltext vectors')
     
     #Load labels
-    categories = [m['categories'][0].split()[0] for m in metadata]
+    categories = np.array([m['categories'][0].split()[0] for m in metadata],
+                          dtype='object')
     labels = list(set(categories))
     onehot_labels = onehot(categories, labels)
     logger.info('finished loading metadata')
@@ -235,7 +236,6 @@ def cast_data_into_right_form(N):
     
     #Combine all
     vecs = np.concatenate([title_vecs, abstract_vecs, fulltext_vecs], axis=1)
-    vecs_train, vecs_test = vecs[:cutoff1], vecs[cutoff2:]
     save_data(
         G_sub, nodes_int, nodes_string, 'all', vecs, 
         onehot_labels, cutoff1, cutoff2
