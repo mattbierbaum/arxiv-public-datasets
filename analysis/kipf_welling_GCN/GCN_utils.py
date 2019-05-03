@@ -140,8 +140,7 @@ def cast_data_into_right_form(N):
         
     """
     logger.info('Loading metadata')
-    metadata = np.array(load_metadata(), dtype='object')
-    shuffle(metadata)
+    metadata = shuffle(np.array(load_metadata(), dtype='object'))
     md_aid_order = {m.get('id'): i for i, m in enumerate(metadata)}
     logger.info('Finished loading metadata')
     
@@ -172,19 +171,19 @@ def cast_data_into_right_form(N):
         G_sub = G
         
     nodes_string = [m['id'] for m in metadata]
+    nodes_int = np.arange(len(G_sub))
 
-    # NOTE: label nodes by shuffled index order, will match metadata
+    # NOTE: label nodes by shuffled index order, will match metadata index
     nodes_relabel = {l: i for i, l in enumerate(nodes_string)}
     nx.relabel_nodes(G_sub, nodes_relabel, copy=False)
-    nodes_int = np.arange(len(nodes_string))
-    shuffle(nodes_int)
+
+    #nodes_int = G_sub.nodes()  # np.arange(len(nodes_string))
     logger.info('Finished loading graph')
 
     TITLE_FILE = os.path.join(EMB_DIR, 'title-embedding-usel-2019-03-19.pkl')
 
     logger.info('Loading title vectors')
-    title_vecs = load_embeddings(TITLE_FILE)['embeddings'][slicer]
-    shuffle(title_vecs)
+    title_vecs = shuffle(load_embeddings(TITLE_FILE)['embeddings'])[slicer]
     logger.info('Finished loading title vectors')
 
     ABSTRACT_FILE = os.path.join(
@@ -192,8 +191,7 @@ def cast_data_into_right_form(N):
     )
 
     logger.info('Loading abstract vectors')
-    abstract_vecs = load_embeddings(ABSTRACT_FILE)['embeddings'][slicer]
-    shuffle(abstract_vecs)
+    abstract_vecs = shuffle(load_embeddings(ABSTRACT_FILE)['embeddings'])[slicer]
     logger.info('Finished loading abstract vectors')
 
     FULLTEXT_FILE = os.path.join(
@@ -201,13 +199,11 @@ def cast_data_into_right_form(N):
     )
 
     logger.info('Loading fulltext vectors')
-    fulltext_vecs = fill_zeros(load_embeddings(FULLTEXT_FILE, 2))[slicer]
-    shuffle(fulltext_vecs)
+    fulltext_vecs = shuffle(fill_zeros(load_embeddings(FULLTEXT_FILE, 2)))[slicer]
     logger.info('Finished loading fulltext vectors')
     
     #Load labels
     categories = [m['categories'][0].split()[0] for m in metadata]
-    shuffle(categories)
     labels = list(set(categories))
     onehot_labels = onehot(categories, labels)
     logger.info('finished loading metadata')
