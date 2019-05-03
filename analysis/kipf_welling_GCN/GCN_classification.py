@@ -22,7 +22,7 @@ def main():
         
     #Put data into right format
     if data_made == False:
-        logger.info('Preparing data \n ')
+        logger.info('Preparing data')
         if not os.path.exists(SAVE_DIR):
             os.makedirs(SAVE_DIR)
 
@@ -32,7 +32,7 @@ def main():
         u.cast_data_into_right_form(N)
     
     #Then do the GCN classification
-    logger.info('\n Now starting classification')
+    logger.info('Now starting classification')
     
     cmd = 'python analysis/kipf_welling_GCN/train.py --dataset arXiv-{} --epochs {}'
     #title vectors --- see the train.py file for other command file arguments
@@ -40,22 +40,20 @@ def main():
     os.system(cmd.format('title', epochs))
 
     #abstract vectors
-    logger.info('\n Starting abstract vectors')
+    logger.info('Starting abstract vectors')
     os.system(cmd.format('abstract', epochs))
     
     #fulltext
-    logger.info('\n Starting fulltext vectors')
+    logger.info('Starting fulltext vectors')
     os.system(cmd.format('fulltext', epochs))
     
     #all together
-    logger.info('\n Starting all vectors')
+    logger.info('Starting all vectors')
     os.system(cmd.format('all', epochs))
      
     #Delete the data I don't need
     #if delete_data == True:
     #    os.system('rm -r data/')
-    
-    return
     
   
 if __name__ == '__main__':
