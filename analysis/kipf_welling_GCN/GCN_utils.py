@@ -84,9 +84,8 @@ def sync_G_with_metadata(G, m):
         logger.warning('Inconsistency between graph and metadata')
     return G
 
-def save_data(G, nodes_int, nodes_string, vector_label, vector_train, 
-              vector_test, vector, labels_train, labels_test, onehot_labels,
-              cutoff1, cutoff2):
+def save_data(G, nodes_int, nodes_string, vector_str, vectors, 
+              onehot_labels, cutoff1, cutoff2):
     """ 
     Saves data in format required by Kipfs and Welling
     
@@ -95,37 +94,35 @@ def save_data(G, nodes_int, nodes_string, vector_label, vector_train,
         vector_type = string, = 'title', 'abstract', 'full-text'
     """
     FNAME_TEMPLATE = os.path.join(
-        SAVE_DIR, 'ind.arXiv-{}.{{}}'.format(vector_label)
+        SAVE_DIR, 'ind.arXiv-{}.{{}}'.format(vector_str)
     )
+
+    # training vectors
     with open(FNAME_TEMPLATE.format('x'), 'wb') as fout:
-        pkl.dump(vector_train, fout, protocol=4)
-
-    with open(FNAME_TEMPLATE.format('tx'), 'wb') as fout:
-        pkl.dump(vector_test, fout, protocol=4)
-
-    with open(FNAME_TEMPLATE.format('allx'), 'wb') as fout:
-        pkl.dump(vector[:cutoff2], fout, protocol=4)
-
+        pkl.dump(vectors[:cutoff1], fout, protocol=4)
+    # training labels
     with open(FNAME_TEMPLATE.format('y'), 'wb') as fout:
-        pkl.dump(labels_train, fout, protocol=4)
-
+        pkl.dump(onehot_labels[:cutoff1], fout, protocol=4)
+    # test vectors    
+    with open(FNAME_TEMPLATE.format('tx'), 'wb') as fout:
+        pkl.dump(vectors[cutoff2:], fout, protocol=4)
+    # test labels
     with open(FNAME_TEMPLATE.format('ty'), 'wb') as fout:
-        pkl.dump(labels_test, fout, protocol=4)
+        pkl.dump(onehot_labels[cutoff2:], fout, protocol=4)
+    
+    with open(FNAME_TEMPLATE.format('allx'), 'wb') as fout:
+        pkl.dump(vectors[:cutoff2], fout, protocol=4)
 
     with open(FNAME_TEMPLATE.format('ally'), 'wb') as fout:
         pkl.dump(onehot_labels[:cutoff2], fout, protocol=4)
-
-    test_nodes = nodes_int[cutoff2:]
+    
+    # test nodes of graph
     with open(FNAME_TEMPLATE.format('test.index'), 'wt') as f:
-        for node in test_nodes:
+        for node in nodes_int[cutoff2:]:
             f.write(str(node))
             f.write('\n')
     
-    #Save graph in format required by Kipf-Welling -- nodes labeled as ints
-    #Also, need to save in same order as metadata
-    #COLIN: I relabeled the nodes to matche metadata before sending here
-    
-    #Save 
+    # graph
     graph_dict = {}     
     for node in G.nodes():  
         graph_dict[node] = list(G.neighbors(node))
@@ -142,8 +139,6 @@ def cast_data_into_right_form(N):
              N = 0 means take all the nodes
         
     """
-    
-    #Meta data -- need this later
     logger.info('Loading metadata')
     metadata = np.array(load_metadata(), dtype='object')
     shuffle(metadata)
@@ -166,16 +161,15 @@ def cast_data_into_right_form(N):
         biggest = max(comps, key=len)
         G_cc = G.subgraph(biggest)
         nodes = list(G_cc.nodes())[:N]
-        G_sub = G_cc.subgraph(nodes)
+        G_sub = nx.DiGraph(G_cc.subgraph(nodes))
 
+        # cut up metadata for smaller dataset
         slicer = np.s_[np.array([md_aid_order[n] for n in nodes])]
         metadata = metadata[slicer]
         logger.info('Using {} nodes'.format(len(nodes)))
     else:
         slicer = np.s_[:]
         G_sub = G
-        
-    G_sub = G
         
     nodes_string = [m['id'] for m in metadata]
 
@@ -202,7 +196,6 @@ def cast_data_into_right_form(N):
     shuffle(abstract_vecs)
     logger.info('Finished loading abstract vectors')
 
-    #fulltext_vecs = load_fulltext(G, metadata, nodes_string, dirname)
     FULLTEXT_FILE = os.path.join(
         EMB_DIR, 'fulltext-embedding-usel-2-headers-2019-04-05.pkl'
     )
@@ -219,54 +212,37 @@ def cast_data_into_right_form(N):
     onehot_labels = onehot(categories, labels)
     logger.info('finished loading metadata')
 
-    #dirname = '/home/kokeeffe/research/arxiv-public-datasets/arxiv-data'
-    #labels_cat = load_labels(nodes_string, m)
-    #t2 = time.time()
-    #print( 'Loading features & labels took ' + str((t2-t1)/60.0) + ' mins')
-    
     #Split into test & train & ulabeled portion
     #For now, I'll assume that nothing is unlabeled
     #That means cutoff1 and cutoff2 are the same
-    #t1 = time.time()
-   
-    #Shuffle
-    #indicies = list(range(len(title_vecs)))
-    #np.random.shuffle(indicies)
-    #title_vecs = title_vecs[indicies]
-    #abstract_vecs = abstract_vecs[indicies]
-    #fulltext_vecs = fulltext_vecs[indicies] 
-    #nodes_int = nodes_int[indicies]
-    #nodes_string = nodes_string[indicies]
-
-    #Split
-    cutoff1 = 1200000  # int(0.9*title_vecs.shape[0]) 
-    cutoff2 = 1200000  # int(0.9*title_vecs.shape[0])
-    title_vec_train, title_vec_test = title_vecs[:cutoff1], title_vecs[cutoff2:]
-    abstract_vec_train, abstract_vec_test = abstract_vecs[:cutoff1], abstract_vecs[cutoff2:]
-    fulltext_vec_train, fulltext_vec_test = fulltext_vecs[:cutoff1], fulltext_vecs[cutoff2:]
-    labels_train, labels_test = onehot_labels[:cutoff1], onehot_labels[cutoff2:]
+    if N:
+        cutoff1 = int(0.79*title_vecs.shape[0]) 
+        cutoff2 = int(0.79*title_vecs.shape[0])
+    else:
+        cutoff1 = cutoff2 = 1200000  # matching logistic testcase
 
     #Save data
     save_data(
-        G_sub, nodes_int, nodes_string, 'title', title_vec_train, title_vec_test, title_vecs,
-        labels_train, labels_test, onehot_labels, cutoff1, cutoff2,
+        G_sub, nodes_int, nodes_string, 'title', title_vecs, 
+        onehot_labels, cutoff1, cutoff2
     )
     
     save_data(
-        G_sub, nodes_int, nodes_string, 'abstract', abstract_vec_train, abstract_vec_test, 
-        abstract_vecs, labels_train, labels_test, onehot_labels, cutoff1, cutoff2
+        G_sub, nodes_int, nodes_string, 'abstract', abstract_vecs,
+        onehot_labels, cutoff1, cutoff2
     )
     
     save_data(
-        G_sub, nodes_int, nodes_string, 'fulltext', fulltext_vec_train, fulltext_vec_test, 
-        fulltext_vecs,labels_train, labels_test, onehot_labels, cutoff1, cutoff2
+        G_sub, nodes_int, nodes_string, 'fulltext', fulltext_vecs,
+        onehot_labels, cutoff1, cutoff2
     )
     
     #Combine all
     vecs = np.concatenate([title_vecs, abstract_vecs, fulltext_vecs], axis=1)
     vecs_train, vecs_test = vecs[:cutoff1], vecs[cutoff2:]
     save_data(
-        G_sub, nodes_int, nodes_string, 'all', vecs_train, vecs_test, vecs, 
-        labels_train, labels_test, onehot_labels, cutoff1, cutoff2,
+        G_sub, nodes_int, nodes_string, 'all', vecs, 
+        onehot_labels, cutoff1, cutoff2
     )
+
     logger.info('Finished saving data')
