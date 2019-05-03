@@ -15,7 +15,7 @@ logger = LOGGER.getChild('kipf-welling')
 EMB_DIR = os.path.join(DIR_OUTPUT, 'embeddings')
 
 # Location of saved data for Kipf-Welling
-SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling')
+SAVE_DIR = os.path.join(DIR_OUTPUT, 'kipf-welling', 'data')
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
@@ -130,7 +130,7 @@ def save_data(G, nodes_int, nodes_string, vector_label, vector_train,
     for node in G.nodes():  
         graph_dict[node] = list(G.neighbors(node))
     pkl.dump(
-        graph_dict, open(FNAME_TEMPLATE.format('.graph'), 'wb'), 
+        graph_dict, open(FNAME_TEMPLATE.format('graph'), 'wb'), 
         protocol=4
     )
 
@@ -167,8 +167,12 @@ def cast_data_into_right_form(N):
         G_cc = G.subgraph(biggest)
         nodes = list(G_cc.nodes())[:N]
         G_sub = G_cc.subgraph(nodes)
-        metadata = [metadata[md_aid_order[n]] for n in nodes]
+
+        slicer = np.s_[np.array([md_aid_order[n] for n in nodes])]
+        metadata = metadata[slicer]
+        logger.info('Using {} nodes'.format(len(nodes)))
     else:
+        slicer = np.s_[:]
         G_sub = G
         
     G_sub = G
@@ -185,7 +189,7 @@ def cast_data_into_right_form(N):
     TITLE_FILE = os.path.join(EMB_DIR, 'title-embedding-usel-2019-03-19.pkl')
 
     logger.info('Loading title vectors')
-    title_vecs = load_embeddings(TITLE_FILE)['embeddings']
+    title_vecs = load_embeddings(TITLE_FILE)['embeddings'][slicer]
     shuffle(title_vecs)
     logger.info('Finished loading title vectors')
 
@@ -194,7 +198,7 @@ def cast_data_into_right_form(N):
     )
 
     logger.info('Loading abstract vectors')
-    abstract_vecs = load_embeddings(ABSTRACT_FILE)['embeddings']
+    abstract_vecs = load_embeddings(ABSTRACT_FILE)['embeddings'][slicer]
     shuffle(abstract_vecs)
     logger.info('Finished loading abstract vectors')
 
@@ -204,7 +208,7 @@ def cast_data_into_right_form(N):
     )
 
     logger.info('Loading fulltext vectors')
-    fulltext_vecs = fill_zeros(load_embeddings(FULLTEXT_FILE, 2))
+    fulltext_vecs = fill_zeros(load_embeddings(FULLTEXT_FILE, 2))[slicer]
     shuffle(fulltext_vecs)
     logger.info('Finished loading fulltext vectors')
     
