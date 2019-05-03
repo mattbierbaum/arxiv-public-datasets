@@ -29,6 +29,25 @@ However, the rest of it must be generated locally.
 The requirements to generate the datasets from this repository vary from
 dataset to dataset, but the requirements for all is:
 
+## Contributing
+
+Thank you for you interest in contributing! We welcome many forms of input --
+GitHub issues, email, pull requests to name a few. Let us know how if there are
+ways we can better present and preserve the dataset.
+
+## Citing
+
+If you wish to cite the dataset in your own work, a suggested bibtex entry is:
+
+    @misc{clement2019arxiv,
+        title={On the Use of ArXiv as a Dataset},
+        author={Colin B. Clement and Matthew Bierbaum and Kevin P. O'Keeffe and Alexander A. Alemi},
+        year={2019},
+        eprint={1905.00075},
+        archivePrefix={arXiv},
+        primaryClass={cs.IR}
+    }
+
 ## Setup on Linux
 
 Install the required system packages (or use an alternative Python distribution
