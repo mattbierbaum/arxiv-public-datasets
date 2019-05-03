@@ -1,0 +1,22 @@
+{
+    "astro-ph": "#42d6ed",
+    "cond-mat": "#5b6ce5", 
+    "gr-qc": "#1abcb9",
+    "hep-ex": "#785782",
+    "hep-lat": "#f719ff",
+    "hep-ph": "#e693ff",
+    "hep-th": "#ae00ff", 
+    "math-ph": "#ca5fd8",
+    "nlin": "#6a8ddd",
+    "nucl-ex": "#9775ce",
+    "nucl-th": "#dcc6ff",
+    "physics": "#0026ff",
+    "quant-ph": "#122087",
+    "math": "#dd0b43",
+    "cs": "#f4af0e",
+    "q-bio": "#00aa38",
+    "q-fin": "#473d2d",
+    "stat": "#8dff89",
+    "eess": "#eaef1f",
+    "econ": "#92a036"
+}

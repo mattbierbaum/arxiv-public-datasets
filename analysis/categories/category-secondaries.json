@@ -1,0 +1,199 @@
+{
+  "hep-ph": [
+    "hep-ph"
+  ],
+  "math": [
+    "math.FA",
+    "math.MG",
+    "math.GM",
+    "math.GR",
+    "math.CT",
+    "math.GN",
+    "math.CA",
+    "math.LO",
+    "math.DG",
+    "math.SG",
+    "math.CO",
+    "math.AG",
+    "math.OC",
+    "math.QA",
+    "math.MP",
+    "math.IT",
+    "math.ST",
+    "math.CV",
+    "math.OA",
+    "math.HO",
+    "math.RT",
+    "math.AC",
+    "math.NA",
+    "math.DS",
+    "math.NT",
+    "math.RA",
+    "math.SP",
+    "math.AP",
+    "math.PR",
+    "math.KT",
+    "math.AT",
+    "math.GT"
+  ],
+  "cs": [
+    "cs.MS",
+    "cs.GL",
+    "cs.IT",
+    "cs.CG",
+    "cs.NE",
+    "cs.MA",
+    "cs.AI",
+    "cs.LG",
+    "cs.LO",
+    "cs.OS",
+    "cs.DC",
+    "cs.PL",
+    "cs.SY",
+    "cs.NI",
+    "cs.HC",
+    "cs.SI",
+    "cs.CR",
+    "cs.DM",
+    "cs.SE",
+    "cs.DB",
+    "cs.FL",
+    "cs.CC",
+    "cs.AR",
+    "cs.ET",
+    "cs.OH",
+    "cs.IR",
+    "cs.CV",
+    "cs.RO",
+    "cs.MM",
+    "cs.PF",
+    "cs.SD",
+    "cs.DL",
+    "cs.DS",
+    "cs.CY",
+    "cs.CL",
+    "cs.GR",
+    "cs.SC",
+    "cs.NA",
+    "cs.GT",
+    "cs.CE"
+  ],
+  "physics": [
+    "physics.comp-ph",
+    "physics.optics",
+    "physics.geo-ph",
+    "physics.chem-ph",
+    "physics.ed-ph",
+    "physics.flu-dyn",
+    "physics.hist-ph",
+    "physics.plasm-ph",
+    "physics.class-ph",
+    "physics.data-an",
+    "physics.acc-ph",
+    "physics.pop-ph",
+    "physics.atom-ph",
+    "physics.gen-ph",
+    "physics.med-ph",
+    "physics.soc-ph",
+    "physics.ao-ph",
+    "physics.space-ph",
+    "physics.bio-ph",
+    "physics.app-ph",
+    "physics.atm-clus",
+    "physics.ins-det"
+  ],
+  "cond-mat": [
+    "cond-mat.dis-nn",
+    "cond-mat.mtrl-sci",
+    "cond-mat.str-el",
+    "cond-mat.other",
+    "cond-mat.mes-hall",
+    "cond-mat.soft",
+    "cond-mat.supr-con",
+    "cond-mat",
+    "cond-mat.quant-gas",
+    "cond-mat.stat-mech"
+  ],
+  "gr-qc": [
+    "gr-qc"
+  ],
+  "astro-ph": [
+    "astro-ph",
+    "astro-ph.GA",
+    "astro-ph.IM",
+    "astro-ph.SR",
+    "astro-ph.CO",
+    "astro-ph.HE",
+    "astro-ph.EP"
+  ],
+  "hep-th": [
+    "hep-th"
+  ],
+  "hep-ex": [
+    "hep-ex"
+  ],
+  "nlin": [
+    "nlin.PS",
+    "nlin.CD",
+    "nlin.CG",
+    "nlin.AO",
+    "nlin.SI"
+  ],
+  "q-bio": [
+    "q-bio.TO",
+    "q-bio.CB",
+    "q-bio.SC",
+    "q-bio.OT",
+    "q-bio.MN",
+    "q-bio.GN",
+    "q-bio.NC",
+    "q-bio.PE",
+    "q-bio.QM",
+    "q-bio",
+    "q-bio.BM"
+  ],
+  "quant-ph": [
+    "quant-ph"
+  ],
+  "hep-lat": [
+    "hep-lat"
+  ],
+  "nucl-th": [
+    "nucl-th"
+  ],
+  "math-ph": [
+    "math-ph"
+  ],
+  "nucl-ex": [
+    "nucl-ex"
+  ],
+  "stat": [
+    "stat.ML",
+    "stat.AP",
+    "stat.TH",
+    "stat.OT",
+    "stat.CO",
+    "stat.ME"
+  ],
+  "q-fin": [
+    "q-fin.ST",
+    "q-fin.RM",
+    "q-fin.GN",
+    "q-fin.TR",
+    "q-fin.PR",
+    "q-fin.PM",
+    "q-fin.MF",
+    "q-fin.CP",
+    "q-fin.EC"
+  ],
+  "econ": [
+    "econ.EM",
+    "econ.TH",
+    "econ.GN"
+  ],
+  "eess": [
+    "eess.IV",
+    "eess.AS",
+    "eess.SP"
+  ]
+}
