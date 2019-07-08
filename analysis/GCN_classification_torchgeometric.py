@@ -108,10 +108,10 @@ def train_test(model, data):
     
     #Train model
     model.train()
-    num_epochs = 200
+    num_epochs = 500
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-8)
     trains, vals = [], []
-    for epoch in range(num_epochs):
+    for epoch in range(1,num_epochs+1):
         optimizer.zero_grad()
         out = model(data)
         loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
@@ -269,8 +269,15 @@ EMB_DIR = os.path.join(DIR_OUTPUT, 'embeddings')
 
 if __name__ == '__main__':
 
-    #N = 10**3   # N = 0 means the whole graph
-    N = 0
+    N = 10**2   # N = 0 means the whole graph
+    #N = 0
+
+    #Make directories
+    PATH = os.path.join(DIR_OUTPUT, 'GCN')
+    if not os.path.exists(PATH):
+	    os.mkdir(PATH)
+	    os.mkdir(os.path.join(PATH,'test_stats'))
+	    os.mkdir(os.path.join(PATH,'models'))
 
     #Load graph and metadata
     logger.info('Loading metadata')
