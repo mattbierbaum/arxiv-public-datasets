@@ -1,3 +1,12 @@
+""" 
+
+Python: version 3.7.3 
+Pytorch: version 1.1.0
+Pytorch geometric: version 1.2.1
+
+"""
+
+
 from arxiv_public_data.embeddings.util import load_embeddings, fill_zeros
 from arxiv_public_data.config import DIR_OUTPUT, DIR_BASE, LOGGER
 from arxiv_public_data.oai_metadata import load_metadata
@@ -269,8 +278,8 @@ EMB_DIR = os.path.join(DIR_OUTPUT, 'embeddings')
 
 if __name__ == '__main__':
 
-    N = 10**2   # N = 0 means the whole graph
-    #N = 0
+    N = 10**2
+    #N = 0   # N = 0 means the entire graph
 
     #Make directories
     PATH = os.path.join(DIR_OUTPUT, 'GCN')
