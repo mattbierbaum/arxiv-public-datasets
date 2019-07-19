@@ -9,7 +9,6 @@ Pytorch: version 1.1.0
 Pytorch geometric: version 1.2.1
 
 """
-
 from arxiv_public_data.embeddings.util import load_embeddings, fill_zeros
 from arxiv_public_data.config import DIR_OUTPUT, DIR_BASE, LOGGER
 from arxiv_public_data.oai_metadata import load_metadata
@@ -30,23 +29,41 @@ from utils import *
 
 
 
-class Encoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(Encoder, self).__init__()
-        self.conv1 = GCNConv(in_channels, 2 * out_channels, cached=True)
-        if args.model in ['GAE']:
-            self.conv2 = GCNConv(2 * out_channels, out_channels, cached=True)
-        elif args.model in ['VGAE']:
-            self.conv_mu = GCNConv(2 * out_channels, out_channels, cached=True)
-            self.conv_logvar = GCNConv(
-                2 * out_channels, out_channels, cached=True)
+class EncoderNew(torch.nn.Module):
+    def __init__(self, data, num_layers = 1, hidden_dim = 32, latent_dim = 16):
+        super(EncoderNew, self).__init__()
+        
+        #Instantiate
+        self.num_features = data.x.shape[1]
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.latent_dim = latent_dim
+        
+        #Make sizes of layers
+        self.layers = ModuleList()
+        sizes = [self.num_features]
+        for i in range(self.num_layers-1):
+            sizes.append(self.hidden_dim)
+        sizes.append(self.latent_dim)
+        
+        #Make layers
+        for k in range(self.num_layers):
+            self.layers.append(GCNConv(sizes[k], sizes[k+1], cached=True))
+            
+        #Made mu and log layers at end
+        self.conv_mu = GCNConv(sizes[-1], self.latent_dim, cached=True)
+        self.conv_logvar = GCNConv(sizes[-1], self.latent_dim, cached=True)
+        
 
     def forward(self, x, edge_index):
-        x = F.relu(self.conv1(x, edge_index))
-        if args.model in ['GAE']:
-            return self.conv2(x, edge_index)
-        elif args.model in ['VGAE']:
-            return self.conv_mu(x, edge_index), self.conv_logvar(x, edge_index)
+        
+        #Push through
+        for layer in self.layers:
+            x = layer(x,edge_index)
+            x = F.relu(x)
+            
+        #Then return mu and log_sigma
+        return self.conv_mu(x, edge_index), self.conv_logvar(x, edge_index)
 
 
 def sample_negative_edges(edge_index, num_negative_edges, MAXITER=500):
@@ -276,28 +293,28 @@ if __name__ == '__main__':
     data = Data(x = x, y = y, edge_index = edge_index.t().contiguous(), train_mask= train_mask, \
                val_mask = val_mask, test_mask = test_mask)
     logger.info('Finished prepping data')
-                                                                 
-
+                                                          
     logger.info('Starting training')
+    
     #Build model
-    channels = 16
+    L,H,lat,lam = 3, 32, 16, 0.01
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = kwargs[args.model](Encoder(data.num_features, channels)).to(dev)
+    model = VGAE(EncoderNew(data, num_layers = L, hidden_dim = H, latent_dim = lat)).to(dev)
     data.train_mask = data.val_mask = data.test_mask = data.y = None
     #data = model.split_edges(data)
     data = split_edges_custom(data)
     x, train_pos_edge_index = data.x.to(dev), data.train_pos_edge_index.to(dev)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lam)
 
     #Train
     results = {}
-    for epoch in range(1, EPOCHS+1): #401
+    for epoch in range(1, EPOCHS+1):
         train(epoch)
         auc_test, ap_test = test(data.test_pos_edge_index, data.test_neg_edge_index)
         auc_val, ap_val = test(data.val_pos_edge_index, data.val_neg_edge_index)
-        #auc_val, auc_test = test(data.test_pos_edge_index, data.test_neg_edge_index)
-        print('Epoch: {:03d}, AUC_test: {:.4f}, AUC_val: {:.4f}'.format(epoch, auc_test, auc_val))
-    logger.info('Finished training')
+        if epoch % 25 == 0:
+            print('Epoch: {:03d}, AUC_test: {:.4f}, AUC_val: {:.4f}'.format(epoch, auc_test, auc_val))
+    logger.info('Finished training')                                       
     results['AUC'], results['AP'] = auc_test, ap_test
 
 
@@ -319,25 +336,26 @@ if __name__ == '__main__':
     data.x = torch.eye(data.x.shape[0], data.x.shape[1])   #set features to identity matrix                                    
 
     logger.info('Starting training')
+    
     #Build model
-    channels = 16
+    L,H,lat,lam = 3, 32, 16, 0.01
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = kwargs[args.model](Encoder(data.num_features, channels)).to(dev)
+    model = VGAE(EncoderNew(data, num_layers = L, hidden_dim = H, latent_dim = lat)).to(dev)
     data.train_mask = data.val_mask = data.test_mask = data.y = None
     #data = model.split_edges(data)
     data = split_edges_custom(data)
     x, train_pos_edge_index = data.x.to(dev), data.train_pos_edge_index.to(dev)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lam)
 
     #Train
     results = {}
-    for epoch in range(1, EPOCHS+1): #401
-        train(0)  #set to zero so I don't overwrite the saved models
+    for epoch in range(1, EPOCHS+1):
+        train(0)
         auc_test, ap_test = test(data.test_pos_edge_index, data.test_neg_edge_index)
         auc_val, ap_val = test(data.val_pos_edge_index, data.val_neg_edge_index)
-        #auc_val, auc_test = test(data.test_pos_edge_index, data.test_neg_edge_index)
-        print('Epoch: {:03d}, AUC_test: {:.4f}, AUC_val: {:.4f}'.format(epoch, auc_test, auc_val))
-    logger.info('Finished training')
+        if epoch % 25 == 0:
+            print('Epoch: {:03d}, AUC_test: {:.4f}, AUC_val: {:.4f}'.format(epoch, auc_test, auc_val))
+    logger.info('Finished training')                                       
     results['AUC'], results['AP'] = auc_test, ap_test
 
 
