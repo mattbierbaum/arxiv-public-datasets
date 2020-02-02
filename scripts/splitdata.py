@@ -2,6 +2,7 @@
 splitdata.py
 """
 
+import os
 import logging
 import random
 from pathlib import Path
@@ -48,6 +49,41 @@ def testtrain_split(metadata, proportions=(0.9, 0.05), labels=('train', 'test', 
         with path.open('w') as fout:
             fout.write('\n'.join(split))
 
-if __name__ == '__main__':
 
-    testtrain_split(load_metadata())
+def split_fulltext(directory, proportions=(0.9, 0.05), labels=('train', 'test', 'val'), seed=SEED):
+    directory = Path(directory)
+    files = []
+    for dirpath, dirnames, filenames in os.walk(directory):
+        for fil in filenames:
+            if Path(fil).match("*?.txt"):
+                files.append(Path(dirpath) / fil)
+
+    LOGGER.info(f'Found {len(files)} .txt files')
+
+    split_paths = [Path(DIR_OUTPUT) / f'fulltext_{seed}.{lab}' for lab in labels]
+    fulltext_split = [[] for lab in labels]
+
+    cumprop = [ sum(proportions[:i+1]) for i in range(len(proportions)) ]
+    for fil in files:
+        rnd = random.random()
+        if rnd < cumprop[0]:
+            fulltext_split[0].append(fil)
+        elif rnd < cumprop[1]:
+            fulltext_split[1].append(fil)
+        else:
+            fulltext_split[2].append(fil)
+
+    for lab, split in zip(labels, fulltext_split):
+        LOGGER.info(f'{lab} split contains {len(split)} examples out of {len(files)}')
+
+    for path, split in zip(split_paths, fulltext_split):
+        LOGGER.info(f'Saving {path}')
+        with path.open('w') as fout:
+            for fil in split:
+                with fil.open('r') as fin:
+                    fout.write(fin.read())
+
+if __name__ == '__main__':
+    #pass
+    #testtrain_split(load_metadata())
+    split_fulltext('/smartml-athena/arxiv/fulltext/')
