@@ -31,7 +31,7 @@ dataset to dataset, but the requirements for all is:
 
 ## Contributing
 
-Thank you for you interest in contributing! We welcome many forms of input --
+Thank you for your interest in contributing! We welcome many forms of input --
 GitHub issues, email, pull requests to name a few. Let us know how if there are
 ways we can better present and preserve the dataset.
 
