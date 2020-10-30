@@ -171,7 +171,7 @@ engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
   </tr>
   <tr>
     <td>sameAs</td>
-    <td><code itemprop="url">https://github.com/mattbierbaum/arxiv-public-datasets</code></td>
+    <td><code itemprop="sameAs">https://github.com/mattbierbaum/arxiv-public-datasets</code></td>
   </tr>
   <tr>
     <td>description</td>
@@ -189,8 +189,7 @@ engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
   </tr>
   <tr>
     <td>Creators</td>
-    <code itemprop="creator">
-    <td>
+    <td><code itemprop="creator">
 
       <div itemscope itemtype="http://schema.org/Person" itemprop="provider">
         <table>
@@ -243,8 +242,7 @@ engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
         </table>
       </div>
 
-    </td>
-    </code>
+    </code></td>
   </tr>
   <tr>
     <td>citation</td>
