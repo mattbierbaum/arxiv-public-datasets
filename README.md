@@ -188,63 +188,6 @@ engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
 	</code></td>
   </tr>
   <tr>
-    <td>Creators</td>
-    <td><code itemprop="creator">
-
-      <div itemscope itemtype="http://schema.org/Person" itemprop="provider">
-        <table>
-          <tr>
-            <th>property</th>
-            <th>value</th>
-          </tr>
-          <tr>
-            <td>name</td>
-            <td><code itemprop="name">Colin B. Clement</code></td>
-          </tr>
-            <td><code itemprop="sameAs">https://orcid.org/0000-0002-3727-7308</code></td>
-          </tr>
-        </table>
-      </div>
-
-      <div itemscope itemtype="http://schema.org/Person" itemprop="provider">
-        <table>
-          <tr>
-            <th>property</th>
-            <th>value</th>
-          </tr>
-          <tr>
-            <td>name</td>
-            <td><code itemprop="name">Matthew Bierbaum</code></td>
-        </table>
-      </div>
-
-      <div itemscope itemtype="http://schema.org/Person" itemprop="provider">
-        <table>
-          <tr>
-            <th>property</th>
-            <th>value</th>
-          </tr>
-          <tr>
-            <td>name</td>
-            <td><code itemprop="name">Kevin P. O'Keeffe</code></td>
-        </table>
-      </div>
-
-      <div itemscope itemtype="http://schema.org/Person" itemprop="provider">
-        <table>
-          <tr>
-            <th>property</th>
-            <th>value</th>
-          </tr>
-          <tr>
-            <td>name</td>
-            <td><code itemprop="name">Alexander A. Alemi</code></td>
-        </table>
-      </div>
-
-    </code></td>
-  </tr>
-  <tr>
     <td>citation</td>
     <td><code itemprop="citation">https://arxiv.org/abs/1905.00075</code></td>
   </tr>
