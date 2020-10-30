@@ -176,19 +176,15 @@ engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
   <tr>
     <td>description</td>
     <td><code itemprop="description">
-	  <p>
 	  The arXiv pre-print service is the de facto venue for publishing in many scientific
 	  disciplines. This repository provides tools for using all the publicly available information
 	  provided by the arXiv to download all of the publications and their metadata, extract fulltext
 	  from PDFs, and build a co-citation graph. For each publication the tools provide access to:
-	  </p>
-	  <ul>
-	  <li><b>Article metadata</b> -- title, authors string, category, doi, abstract, submitter<li>
-	  <li><b>PDFs</b> -- all PDFs available through arXiv bulk download<li>
-	  <li><b>Plain text</b> -- PDFs converted to UTF-8 encoded plain text<li>
-	  <li><b>Citation graph</b> -- intra-arXiv citation graph between arXiv IDs only (generated from plain text)<li>
-	  <li><b>Author string parsing</b> -- convert metadata author strings into standardized list of name, affiliations<li>
-	  <\ul>
+	   * **Article metadata** -- title, authors string, category, doi, abstract, submitter
+	   * **PDFs** -- all PDFs available through arXiv bulk download
+	   * **Plain text** -- PDFs converted to UTF-8 encoded plain text
+	   * **Citation graph** -- intra-arXiv citation graph between arXiv IDs only (generated from plain text)
+	   * **Author string parsing** -- convert metadata author strings into standardized list of name, affiliations
 	</code></td>
   </tr>
   <tr>
