@@ -26,8 +26,12 @@ snapshots.  The iterations can be found under the releases tab:
 [Releases](https://github.com/mattbierbaum/arxiv-public-datasets/releases).
 However, the rest of it must be generated locally.
 
-The requirements to generate the datasets from this repository vary from
-dataset to dataset, but the requirements for all is:
+## Kaggle hosting arXiv data
+
+[Kaggle has agreed](https://www.kaggle.com/Cornell-University/arxiv) to cover the cost of hosting the arXiv PDFs,
+and has created some challenges and tasks associated with the arXiv data. You can use our tools from their data
+source: download it from Google cloud using their instructions, storing the PDFs in your local `$ARXIV_DATA/tarpdfs`
+directory. Skip the downloading stage of downloading the PDFs below.
 
 ## Contributing
 
@@ -106,10 +110,10 @@ while the quick method is to:
 
 **Bulk download of ArXiv PDFs**
 
-This download costs about 100 USD (and is 1.1TB) at the time of writing, as the 
+This download costs about 100 USD (and is 1.1TB) at the time of writing, as the
 [ArXiv bulk download](https://arxiv.org/help/bulk_data) only allows
 requester-pays AWS S3 downloads. Ensure that you have at least 1TB of free space
-in the directory specified in `config.json`: 
+in the directory specified in `config.json`:
 
     python bin/pdfdownload.py [OPTIONAL manifest_file.json.gz]
 
@@ -124,7 +128,7 @@ the `$ARXIV_DATA` so that it will not re-download the tars.
 
     python bin/fulltext.py [OPTIONAL number_of_processes, default cpu_count]
 
-At the time of writing, converting 1.39 million articles requires over 400 core-hours 
+At the time of writing, converting 1.39 million articles requires over 400 core-hours
 using two Intel Xeon E5-2600 CPUs.
 
 ## Cocitation network
@@ -147,3 +151,50 @@ and split. To generate and save these author splittings, run:
 
 The split author strings will by default be saved in
 `$ARXIV_DATA/output/authors-parsed.json.gz`.
+
+## Dataset Metadata
+The following table is necessary for this dataset to be indexed by search
+engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
+<div itemscope itemtype="http://schema.org/Dataset">
+<table>
+  <tr>
+    <th>property</th>
+    <th>value</th>
+  </tr>
+  <tr>
+    <td>name</td>
+    <td><code itemprop="name">arXiv Public Datasets</code></td>
+  </tr>
+  <tr>
+    <td>url</td>
+    <td><code itemprop="url">https://github.com/mattbierbaum/arxiv-public-datasets</code></td>
+  </tr>
+  <tr>
+    <td>sameAs</td>
+    <td><code itemprop="sameAs">https://github.com/mattbierbaum/arxiv-public-datasets</code></td>
+  </tr>
+  <tr>
+    <td>description</td>
+    <td><code itemprop="description">
+	  The arXiv pre-print service is the de facto venue for publishing in many scientific
+	  disciplines. This repository provides tools for using all the publicly available information
+	  provided by the arXiv to download all of the publications and their metadata, extract fulltext
+	  from PDFs, and build a co-citation graph. For each publication the tools provide access to:
+	   * **Article metadata** -- title, authors string, category, doi, abstract, submitter
+	   * **PDFs** -- all PDFs available through arXiv bulk download
+	   * **Plain text** -- PDFs converted to UTF-8 encoded plain text
+	   * **Citation graph** -- intra-arXiv citation graph between arXiv IDs only (generated from plain text)
+	   * **Author string parsing** -- convert metadata author strings into standardized list of name, affiliations
+	</code></td>
+  </tr>
+  <tr>
+    <td>citation</td>
+    <td><code itemprop="citation">https://arxiv.org/abs/1905.00075</code></td>
+  </tr>
+  <tr>
+    <td>license</td>
+    <td><code itemprop="license">https://raw.githubusercontent.com/mattbierbaum/arxiv-public-datasets/master/LICENSE</code></td>
+  </tr>
+</table>
+</div>
+
