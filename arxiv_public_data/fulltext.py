@@ -218,10 +218,10 @@ def sorted_files(globber: str):
 
     for fn in files:
         nums = re.findall(r'\d+', fn) # regular expression, find number in path names
-        data = [str(int(n)) for n in nums] + [fn] #a list of [ first number, second number,..., filename] in string format
+        data = [str(int(n)) for n in nums] + [fn] # a list of [first number, second number,..., filename] in string format otherwise sortted fill fail
         allfiles.append(data) # list of list
 
-    allfiles = sorted(allfiles) # this will fail if different path have different number of numbers (resulted in comparing int and str)
+    allfiles = sorted(allfiles) 
     return [f[-1] for f in allfiles] # sorted filenames
 def convert_directory(path: str, timelimit: int=TIMELIMIT):
     """
