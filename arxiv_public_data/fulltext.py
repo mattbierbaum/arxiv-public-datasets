@@ -173,8 +173,9 @@ def fulltext(pdffile: str, timelimit: int=TIMELIMIT):
     output = fixunicode.fix_unicode(output)
     #output = stamp.remove_stamp(output, split=STAMP_SEARCH_LIMIT)
     wordlength = average_word_length(output)
-
+    
     if wordlength <= 45:
+        os.remove(reextension(pdffile,'pdftotxt'))  # remove the tempfile
         return output
 
     output = run_pdf2txt_A(pdffile, timelimit=timelimit)
@@ -186,7 +187,8 @@ def fulltext(pdffile: str, timelimit: int=TIMELIMIT):
         raise RuntimeError(
             'No accurate text could be extracted from "{}"'.format(pdffile)
         )
-
+    
+    os.remove(reextension(pdffile,'pdftotxt'))  # remove the tempfile
     return output
 
 
@@ -209,20 +211,18 @@ def sorted_files(globber: str):
 
 
     """
-    files = glob.glob(globber)
+    files = glob.glob(globber,recursive=True) # return a list of path, including sub directories
     files.sort()
 
     allfiles = []
 
     for fn in files:
-        nums = re.findall(r'\d+', fn)
-        data = [int(n) for n in nums] + [fn]
-        allfiles.append(data)
+        nums = re.findall(r'\d+', fn) # regular expression, find number in path names
+        data = [str(int(n)) for n in nums] + [fn] #a list of [ first number, second number,..., filename] in string format
+        allfiles.append(data) # list of list
 
-    allfiles = sorted(allfiles)
-    return [f[-1] for f in allfiles]
-
-
+    allfiles = sorted(allfiles) # this will fail if different path have different number of numbers (resulted in comparing int and str)
+    return [f[-1] for f in allfiles] # sorted filenames
 def convert_directory(path: str, timelimit: int=TIMELIMIT):
     """
     Convert all pdfs in a given `path` to full plain text. For each pdf, a file
@@ -283,8 +283,8 @@ def convert_directory_parallel(path: str, processes: int, timelimit: int=TIMELIM
     output : list of str
         List of converted files
     """
-    globber = os.path.join(path, '*.pdf')
-    pdffiles = sorted_files(globber)
+    globber = os.path.join(path, '**/*.pdf') # search expression for glob.glob
+    pdffiles = sorted_files(globber)  # a list of path
 
     log.info('Searching "{}"...'.format(globber))
     log.info('Found: {} pdfs'.format(len(pdffiles)))
