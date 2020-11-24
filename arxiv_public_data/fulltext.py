@@ -54,7 +54,7 @@ def process_timeout(cmd, timeout):
 # ============================================================================
 #  functions for calling the text extraction services
 # ============================================================================
-def run_pdf2txt(pdffile: str, timelimit: int=TIMELIMIT, options: str=''):
+def run_pdf2txt(pdffile: str, timelimit: int = TIMELIMIT, options: str = ''):
     """
     Run pdf2txt to extract full text
 
@@ -84,7 +84,7 @@ def run_pdf2txt(pdffile: str, timelimit: int=TIMELIMIT, options: str=''):
         return f.read()
 
 
-def run_pdftotext(pdffile: str, timelimit: int=TIMELIMIT) -> str:
+def run_pdftotext(pdffile: str, timelimit: int = TIMELIMIT) -> str:
     """
     Run pdftotext on PDF file for extracted plain text
 
@@ -138,7 +138,7 @@ def run_pdf2txt_A(pdffile: str, **kwargs) -> str:
 # ============================================================================
 #  main function which extracts text
 # ============================================================================
-def fulltext(pdffile: str, timelimit: int=TIMELIMIT):
+def fulltext(pdffile: str, timelimit: int = TIMELIMIT):
     """
     Given a pdf file, extract the unicode text and run through very basic
     unicode normalization routines. Determine the best extracted text and
@@ -173,9 +173,9 @@ def fulltext(pdffile: str, timelimit: int=TIMELIMIT):
     output = fixunicode.fix_unicode(output)
     #output = stamp.remove_stamp(output, split=STAMP_SEARCH_LIMIT)
     wordlength = average_word_length(output)
-    
+
     if wordlength <= 45:
-        os.remove(reextension(pdffile,'pdftotxt'))  # remove the tempfile
+        os.remove(reextension(pdffile, 'pdftotxt'))  # remove the tempfile
         return output
 
     output = run_pdf2txt_A(pdffile, timelimit=timelimit)
@@ -187,8 +187,8 @@ def fulltext(pdffile: str, timelimit: int=TIMELIMIT):
         raise RuntimeError(
             'No accurate text could be extracted from "{}"'.format(pdffile)
         )
-    
-    os.remove(reextension(pdffile,'pdftotxt'))  # remove the tempfile
+
+    os.remove(reextension(pdffile, 'pdftotxt'))  # remove the tempfile
     return output
 
 
@@ -211,19 +211,20 @@ def sorted_files(globber: str):
 
 
     """
-    files = glob.glob(globber,recursive=True) # return a list of path, including sub directories
+    files = glob.glob(globber, recursive = True) # return a list of path, including sub directories
     files.sort()
 
     allfiles = []
 
     for fn in files:
         nums = re.findall(r'\d+', fn) # regular expression, find number in path names
-        data = [str(int(n)) for n in nums] + [fn] # a list of [first number, second number,..., filename] in string format otherwise sortted fill fail
+        data = [str(int(n)) for n in nums] + [fn]
+        # a list of [first number, second number,..., filename] in string format otherwise sorted fill fail
         allfiles.append(data) # list of list
 
-    allfiles = sorted(allfiles) 
+    allfiles = sorted(allfiles)
     return [f[-1] for f in allfiles] # sorted filenames
-def convert_directory(path: str, timelimit: int=TIMELIMIT):
+def convert_directory(path: str, timelimit: int = TIMELIMIT):
     """
     Convert all pdfs in a given `path` to full plain text. For each pdf, a file
     of the same name but extension .txt will be created. If that file exists,
@@ -267,7 +268,7 @@ def convert_directory(path: str, timelimit: int=TIMELIMIT):
         outlist.append(pdffile)
     return outlist
 
-def convert_directory_parallel(path: str, processes: int, timelimit: int=TIMELIMIT):
+def convert_directory_parallel(path: str, processes: int, timelimit: int = TIMELIMIT):
     """
     Convert all pdfs in a given `path` to full plain text. For each pdf, a file
     of the same name but extension .txt will be created. If that file exists,
@@ -295,7 +296,7 @@ def convert_directory_parallel(path: str, processes: int, timelimit: int=TIMELIM
     pool.join()
 
 
-def convert_safe(pdffile: str, timelimit: int=TIMELIMIT):
+def convert_safe(pdffile: str, timelimit: int = TIMELIMIT):
     """ Conversion function that never fails """
     try:
         convert(pdffile, timelimit=timelimit)
@@ -303,7 +304,7 @@ def convert_safe(pdffile: str, timelimit: int=TIMELIMIT):
         log.error('File conversion failed for {}: {}'.format(pdffile, e))
 
 
-def convert(path: str, skipconverted=True, timelimit: int=TIMELIMIT) -> str:
+def convert(path: str, skipconverted=True, timelimit: int = TIMELIMIT) -> str:
     """
     Convert a single PDF to text.
 
