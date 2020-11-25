@@ -175,7 +175,11 @@ def fulltext(pdffile: str, timelimit: int = TIMELIMIT):
     wordlength = average_word_length(output)
 
     if wordlength <= 45:
-        os.remove(reextension(pdffile, 'pdftotxt'))  # remove the tempfile
+        try:
+            os.remove(reextension(pdffile, 'pdftotxt'))  # remove the tempfile
+        except OSError:
+            pass
+
         return output
 
     output = run_pdf2txt_A(pdffile, timelimit=timelimit)
@@ -187,8 +191,12 @@ def fulltext(pdffile: str, timelimit: int = TIMELIMIT):
         raise RuntimeError(
             'No accurate text could be extracted from "{}"'.format(pdffile)
         )
+    
+    try:
+        os.remove(reextension(pdffile, 'pdftotxt'))  # remove the tempfile
+    except OSError:
+        pass
 
-    os.remove(reextension(pdffile, 'pdftotxt'))  # remove the tempfile
     return output
 
 
@@ -224,6 +232,8 @@ def sorted_files(globber: str):
 
     allfiles = sorted(allfiles)
     return [f[-1] for f in allfiles] # sorted filenames
+
+
 def convert_directory(path: str, timelimit: int = TIMELIMIT):
     """
     Convert all pdfs in a given `path` to full plain text. For each pdf, a file
