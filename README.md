@@ -1,5 +1,5 @@
-# My modification
-I edited the [fulltext()](https://github.com/quynhneo/arxiv-public-datasets_for_kaggle/blob/master/arxiv_public_data/fulltext.py) method if you have any (nested) directory containing pdfs, it will convert all pdfs to text files. 
+# My contribution
+I edited the fulltext() method if you have any (nested) directory containing pdfs, it will convert all pdfs to text files. 
 This is the case if you download the arxiv from Kaggle. It took 20 2.5Ghz cores x 20 hours to convert 2 millions pdfs to text.
 
 Everything else is the same as the original repo:
