@@ -16,6 +16,7 @@ log = LOGGER.getChild('fulltext')
 RE_FLEX = re.compile(REGEX_ARXIV_FLEXIBLE)
 RE_OLDNAME_SPLIT = re.compile(r"([a-z\-]+)(\d+)")
 
+
 def path_to_id(path):
     """ Convert filepath name of ArXiv file to ArXiv ID """
     name = os.path.splitext(os.path.basename(path))[0]
