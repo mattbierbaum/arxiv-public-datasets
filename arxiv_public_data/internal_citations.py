@@ -29,10 +29,17 @@ def path_to_id(path):
 def all_articles(directory=DIR_FULLTEXT):
     """ Find all *.txt files in directory """
     out = []
+    # make sure the path is absolute for os walk
+    if '~' == directory[0]:
+        directory = os.path.expanduser(directory)
+    elif directory != '/':
+        directory = os.path.abspath(directory)
+
     for root, dirs, files in os.walk(directory):
         for f in files:
             if 'txt' in f:
                 out.append(os.path.join(root, f))
+
     return out
 
 def extract_references(filename, pattern=RE_FLEX):
