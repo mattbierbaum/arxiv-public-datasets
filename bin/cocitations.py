@@ -18,5 +18,5 @@ if __name__ == '__main__':
     else:
         processes = multiprocessing.cpu_count()  # default: all cpu available
 
-    #cites = internal_citations.citation_list_parallel(N=processes, directory=txt_dir)
-    #internal_citations.save_to_default_location(cites)
+    cites = internal_citations.citation_list_parallel(N=processes, directory=txt_dir)
+    internal_citations.save_to_default_location(cites)
