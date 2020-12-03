@@ -20,9 +20,10 @@ def path_to_id(path):
     """ Convert filepath name of ArXiv file to ArXiv ID """
     name = os.path.splitext(os.path.basename(path))[0]
     if '.' in name:  # new  ID
-        return name 
+        return name
     split = [a for a in RE_OLDNAME_SPLIT.split(name) if a]
     return "/".join(split)
+
 
 def all_articles(directory=DIR_FULLTEXT):
     """ Find all *.txt files in directory """
@@ -78,19 +79,22 @@ def citation_list_inner(articles):
             continue
     return cites
 
-def citation_list_parallel(N=8):
+
+def citation_list_parallel(N=8, directory=DIR_FULLTEXT):
     """
     Split the task of checking for citations across some number of processes
     Parameters
     ----------
         N : int
             number of processes
+        directory: str
+            directory where full text files are stored
     Returns
     -------
         citations : dict[arXiv ID] = list of arXiv IDs
             all arXiv citations in all articles
     """
-    articles = all_articles()
+    articles = all_articles(directory)
     log.info('Calculating citation network for {} articles'.format(len(articles)))
 
     pool = Pool(N)
