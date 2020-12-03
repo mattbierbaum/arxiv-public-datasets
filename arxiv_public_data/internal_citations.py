@@ -30,7 +30,7 @@ def all_articles(directory=DIR_FULLTEXT):
     """ Find all *.txt files in directory """
     out = []
     # make sure the path is absolute for os walk
-    if '~' == directory[0]:
+    if directory[0] == '~':
         directory = os.path.expanduser(directory)
     elif directory != '/':
         directory = os.path.abspath(directory)
@@ -118,8 +118,10 @@ def citation_list_parallel(N=8, directory=DIR_FULLTEXT):
         allcites.update(c)
     return allcites
 
+
 def default_filename():
     return os.path.join(DIR_OUTPUT, 'internal-citations.json.gz')
+
 
 def save_to_default_location(citations):
     filename = default_filename()

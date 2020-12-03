@@ -3,11 +3,11 @@ from arxiv_public_data import internal_citations
 from arxiv_public_data.config import DIR_FULLTEXT
 
 if __name__ == '__main__':
-    import sys,os
+    import sys
 
     opts = [opt for opt in sys.argv[1:] if opt.startswith("-")]
     args = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
-    opts_args =dict(zip(opts, args))
+    opts_args = dict(zip(opts, args))
     if '-dir' in opts_args:  # option for directory of full text files
         txt_dir = opts_args['-dir']
     else:
