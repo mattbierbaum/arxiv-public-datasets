@@ -133,10 +133,11 @@ using two Intel Xeon E5-2600 CPUs.
 
 **Bulk PDF conversion for Kaggle (Google Cloud) download**
 
-After downloading all pdfs, execute the following:
+After downloading all pdfs, execute the following, use optional argument `--dir` if the pdfs are not at the default directory:
 ```
-python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] --TIMELIMIT [OPTIONAL timelimit, default config.TIMELIMIT]
+python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] 
 ```
+
 All text files will be saved at the same location as pdf files (we suggest you to move them to default location `$ARXIV_DATA/fulltext` using rsync). The conversion time is similar as for AWS download. 
 
 ## Cocitation network
@@ -153,12 +154,10 @@ The cocitation network will by default be saved in
 
 **Kaggle (Google Cloud) download**
 
-To generate the cocitation network, you first must have the full text. Then,
-with the directories still set up, run:
+To generate the cocitation network, you first must have the full text. Use optional argument `--dir` if the pdfs are not at the default location. 
 
     python bin/cocitations.py -N [OPTIONAL number_of_processes,default cpu_count] --dir [texts_directory, default $ARXIV_DATA/fulltext]
 
-Use optional argument `--dir` if the pdfs are not in the default folder. 
 
 The cocitation network will by default be saved in
 `$ARXIV_DATA/output/internal-citations.json.gz`.
