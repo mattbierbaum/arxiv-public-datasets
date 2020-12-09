@@ -133,7 +133,7 @@ using two Intel Xeon E5-2600 CPUs.
 
 **Bulk PDF conversion for Kaggle (Google Cloud) download**
 
-After downloading all pdfs, execute the following, use optional argument `--dir` if the pdfs are not at the default directory:
+After downloading all pdfs, execute the following, use optional argument `--dir` if the pdfs are not at the default location:
 ```
 python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] 
 ```
@@ -154,7 +154,7 @@ The cocitation network will by default be saved in
 
 **Kaggle (Google Cloud) download**
 
-To generate the cocitation network, you first must have the full text. Use optional argument `--dir` if the pdfs are not at the default location. 
+To generate the cocitation network, you first must have the full text. Use optional argument `--dir` if the pdfs are not at the default location, excecute: 
 
     python bin/cocitations.py -N [OPTIONAL number_of_processes,default cpu_count] --dir [texts_directory, default $ARXIV_DATA/fulltext]
 
