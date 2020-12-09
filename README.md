@@ -138,6 +138,7 @@ After downloading all pdfs, execute the following:
 python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] --TIMELIMIT [OPTIONAL timelimit, default config.TIMELIMIT]
 ```
 All text files will be saved at the same location as pdf files (we suggest you to move them to default location `$ARXIV_DATA/fulltext` using rsync). The conversion time is similar as for AWS download. 
+
 ## Cocitation network
 
 **AWS download**
@@ -156,6 +157,8 @@ To generate the cocitation network, you first must have the full text. Then,
 with the directories still set up, run:
 
     python bin/cocitations.py -N [OPTIONAL number_of_processes,default cpu_count] --dir [texts_directory, default $ARXIV_DATA/fulltext]
+
+Use optional argument `--dir` if the pdfs are not in the default folder. 
 
 The cocitation network will by default be saved in
 `$ARXIV_DATA/output/internal-citations.json.gz`.
