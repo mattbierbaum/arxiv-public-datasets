@@ -137,7 +137,7 @@ After downloading all pdfs, execute the following:
 ```
 python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] --TIMELIMIT [OPTIONAL timelimit, default config.TIMELIMIT]
 ```
-All text files will be saved at the same location as pdf files (we suggest you to them to default location `$ARXIV_DATA/fulltext` using rsync). The conversion time is similar as for AWS download. 
+All text files will be saved at the same location as pdf files (we suggest you to move them to default location `$ARXIV_DATA/fulltext` using rsync). The conversion time is similar as for AWS download. 
 ## Cocitation network
 
 **AWS download**
