@@ -95,7 +95,7 @@ gzip-compressed JSON entries. The default save location is
 least 6 hours, as the OAI server only sends 1000 entries every 15 seconds. A
 resumption token is saved, so the process can be restarted by running again.
 
-## PDFs
+## PDFs (AWS download only)
 
 **Prepare credentials**
 
@@ -119,7 +119,7 @@ in the directory specified in `config.json`:
 
 ## Plain text
 
-**Bulk PDF conversion**
+**Bulk PDF conversion for AWS download**
 
 To use our tool for text conversion of all the PDFs from the ArXiv bulk download
 described above, execute the following. NOTE: if you have not already downloaded
@@ -131,12 +131,26 @@ the `$ARXIV_DATA` so that it will not re-download the tars.
 At the time of writing, converting 1.39 million articles requires over 400 core-hours
 using two Intel Xeon E5-2600 CPUs.
 
+**Bulk PDF conversion for Kaggle (Google Cloud) download**
+After downloading all pdfs, execute the following:
+```
+python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] --TIMELIMIT [OPTIONAL timelimit, default config.TIMELIMIT]
+```
+All text files will be saved at the same location as pdf files (we suggest you to them to default location `$ARXIV_DATA/fulltext` using rsync). The conversion time is similar as for AWS download. 
 ## Cocitation network
-
+**AWS download**
 To generate the cocitation network, you first must have the full text. Then,
 with the directories still set up, run:
 
     python bin/cocitations.py [OPTIONAL number_of_processes, default cpu_count]
+
+The cocitation network will by default be saved in
+`$ARXIV_DATA/output/internal-citations.json.gz`.
+**Kaggle (Google Cloud) download**
+To generate the cocitation network, you first must have the full text. Then,
+with the directories still set up, run:
+
+    python bin/cocitations.py -N [OPTIONAL number_of_processes,default cpu_count] --dir [texts_directory, default $ARXIV_DATA/fulltext]
 
 The cocitation network will by default be saved in
 `$ARXIV_DATA/output/internal-citations.json.gz`.
