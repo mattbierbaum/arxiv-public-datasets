@@ -7,7 +7,7 @@ import os
 import gzip
 import json
 import math
-from multiprocessing import Pool
+from multiprocessing import Pool,cpu_count
 
 from arxiv_public_data.regex_arxiv import REGEX_ARXIV_FLEXIBLE, clean
 from arxiv_public_data.config import DIR_FULLTEXT, DIR_OUTPUT, LOGGER
@@ -85,7 +85,7 @@ def citation_list_inner(articles):
     return cites
 
 
-def citation_list_parallel(N=8, directory=DIR_FULLTEXT):
+def citation_list_parallel(N=cpu_count(), directory=DIR_FULLTEXT):
     """
     Split the task of checking for citations across some number of processes
     Parameters
