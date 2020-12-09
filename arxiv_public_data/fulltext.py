@@ -54,7 +54,7 @@ def process_timeout(cmd, timeout):
 # ============================================================================
 #  functions for calling the text extraction services
 # ============================================================================
-def run_pdf2txt(pdffile: str, timelimit: int = TIMELIMIT, options: str = ''):
+def run_pdf2txt(pdffile: str, timelimit: int=TIMELIMIT, options: str=''):
     """
     Run pdf2txt to extract full text
 
