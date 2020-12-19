@@ -139,8 +139,6 @@ Downloading from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from 
 ```
 python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
-PDFs in `$ARXIV_DATA/tarpdfs` will be converted and the text files are store in `$ARXIV_DATA/fulltext`,
-keeping the file structure like on arXiv servers intact.
 
 ## Cocitation network
 
