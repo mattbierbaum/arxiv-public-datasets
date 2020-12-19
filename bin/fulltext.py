@@ -21,8 +21,7 @@ if __name__ == '__main__':
         s3_bulk_download.process_manifest_files(manifest, processes=args.N)
     else:
         convert_directory_parallel(DIR_BASE, processes=args.N)
-        call('rsync -rv --remove-source-files --include="*.txt" --exclude="*.pdf" '
-             '--exclude="{}" --exclude="{}" --exclude="{}" {} {} '.format(os.path.basename(DIR_FULLTEXT),
-                                                                          os.path.basename(DIR_PDFTARS),
-                                                                          os.path.basename(DIR_OUTPUT),
-                                                                          DIR_BASE + os.sep, DIR_FULLTEXT), 0)
+        call('rsync -rv --remove-source-files --prune-empty-dirs --include="*.txt" --exclude="*.pdf" '
+             '--exclude="{}" --exclude="{}" {} {} '.format(os.path.basename(DIR_FULLTEXT),
+                                                           os.path.basename(DIR_OUTPUT),
+                                                           DIR_BASE + os.sep, DIR_FULLTEXT), 0)
