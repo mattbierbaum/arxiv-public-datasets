@@ -126,38 +126,24 @@ described above, execute the following. NOTE: if you have not already downloaded
 the PDFs, this tool will do so. If you have downloaded them, be sure to not change
 the `$ARXIV_DATA` so that it will not re-download the tars.
 
-    python bin/fulltext.py [OPTIONAL number_of_processes, default cpu_count]
+    python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] 
 
 At the time of writing, converting 1.39 million articles requires over 400 core-hours
 using two Intel Xeon E5-2600 CPUs.
 
-**Bulk PDF conversion for Kaggle (Google Cloud) download**
+**Bulk PDF conversion for plain pdfs, e.g. downdloaded from Kaggle (Google Cloud)**
 
-After downloading all pdfs, execute the following, use optional argument `--dir` if the pdfs are not at the default location:
+After downloading all pdfs, execute the following, use argument `--PLAIN_PDFS TRUE`:
 ```
-python bin/convert_directory.py --dir [OPTIONAL pdfs_directory, default $ARXIV_DATA/tarpdfs] -N [OPTIONAL number_of_processes, default cpu_count] 
+python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
-
-All text files will be saved at the same location as pdf files (we suggest you to move them to default location `$ARXIV_DATA/fulltext` using rsync). The conversion time is similar as for AWS download. 
 
 ## Cocitation network
-
-**AWS download**
 
 To generate the cocitation network, you first must have the full text. Then,
 with the directories still set up, run:
 
     python bin/cocitations.py [OPTIONAL number_of_processes, default cpu_count]
-
-The cocitation network will by default be saved in
-`$ARXIV_DATA/output/internal-citations.json.gz`.
-
-**Kaggle (Google Cloud) download**
-
-To generate the cocitation network, you first must have the full text. Use optional argument `--dir` if the pdfs are not at the default location, excecute: 
-
-    python bin/cocitations.py -N [OPTIONAL number_of_processes,default cpu_count] --dir [texts_directory, default $ARXIV_DATA/fulltext]
-
 
 The cocitation network will by default be saved in
 `$ARXIV_DATA/output/internal-citations.json.gz`.
