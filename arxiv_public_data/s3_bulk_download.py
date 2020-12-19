@@ -44,7 +44,7 @@ import tarfile
 import boto3
 import hashlib
 import requests
-import subprocess 
+import subprocess
 
 from functools import partial
 from multiprocessing import Pool
@@ -119,7 +119,7 @@ def default_manifest_filename():
     return os.path.join(DIR_PDFTARS, 'arxiv-manifest.xml.gz')
 
 def get_manifest(filename=None, redownload=False):
-    """ 
+    """
     Get the file manifest for the ArXiv
     Parameters
     ----------
@@ -138,7 +138,7 @@ def get_manifest(filename=None, redownload=False):
     return parse_manifest(manifest)
 
 def parse_manifest(manifest):
-    """ 
+    """
     Parse the XML of the ArXiv manifest file.
 
     Parameters
@@ -167,7 +167,7 @@ def download_check_tarfile(filename, md5_expected, dryrun=False, redownload=Fals
     md5_downloaded = download_file(
         filename, outname, dryrun=dryrun, redownload=redownload
     )
-    
+
     if not dryrun:
         if md5_expected != md5_downloaded:
             msg = "MD5 '{}' does not match expected '{}' for file '{}'".format(
@@ -204,7 +204,7 @@ def _call(cmd, dryrun=False, debug=False):
         )
 
 def _make_pathname(filename):
-    """ 
+    """
     Make filename path for text document, sorted like on arXiv servers.
     Parameters
     ----------
@@ -262,7 +262,7 @@ def process_tarfile_inner(filename, pdfnames=None, processes=1, dryrun=False,
         mvfn = _make_pathname(tf)
         dirname = os.path.dirname(mvfn)
         if not os.path.exists(dirname):
-            _call('mkdir -p {}'.format(dirname, dryrun))
+            _call('mkdir -p {}'.format(dirname), dryrun)
 
         if not dryrun:
             shutil.move(tf, mvfn)
