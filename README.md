@@ -131,12 +131,14 @@ the `$ARXIV_DATA` so that it will not re-download the tars.
 At the time of writing, converting 1.39 million articles requires over 400 core-hours
 using two Intel Xeon E5-2600 CPUs.
 
-**Bulk PDF conversion for plain pdfs, e.g. downdloaded from Kaggle (Google Cloud)**
-
-After downloading all pdfs, execute the following, use argument `--PLAIN_PDFS TRUE`:
+**Bulk PDF conversion for plain PDFs, e.g. downdloaded from Kaggle (Google Cloud)**
+Downloading from AWS are `.tar` files. If plains PDFs are available, such as the case for 
+downloading from Kaggle, add an optional argument `--PLAIN_PDFS TRUE`:
 ```
 python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
+All PDFS in `$ARXIV_DATA/tarpdfs` will be converted and the text files are store in `$ARXIV_DATA/fulltext`
+in the original file structure. 
 
 ## Cocitation network
 
