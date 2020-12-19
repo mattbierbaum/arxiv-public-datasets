@@ -134,6 +134,7 @@ At the time of writing, converting 1.39 million articles requires over 400 core-
 using two Intel Xeon E5-2600 CPUs.
 
 **Bulk PDF conversion for plain PDFs, e.g. downdloaded from Kaggle (Google Cloud)**
+
 Downloading from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from Kaggle, use the optional argument `--PLAIN_PDFS TRUE`:
 ```
 python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
