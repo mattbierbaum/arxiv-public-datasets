@@ -118,7 +118,7 @@ in the directory specified in `config.json`:
     python bin/pdfdownload.py [OPTIONAL manifest_file.json.gz]
 
 ## Plain text
-The tool work for both AWS download (`.tar` files) and Kaggle download (plain PDFs), by changing `--PLAIN_PDFS` option.
+The tool works for both AWS download (`.tar` files) and Kaggle download (plain PDFs), by changing `--PLAIN_PDFS` option.
 ```
 python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS [OPTIONAL if plain PDFs are dowloaded, default FALSE]
 ```
