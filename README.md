@@ -118,7 +118,9 @@ in the directory specified in `config.json`:
     python bin/pdfdownload.py [OPTIONAL manifest_file.json.gz]
 
 ## Plain text
-
+```
+python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS [OPTIONAL if plain PDFs are dowloaded, default FALSE]
+```
 **Bulk PDF conversion for AWS download**
 
 To use our tool for text conversion of all the PDFs from the ArXiv bulk download
@@ -132,12 +134,11 @@ At the time of writing, converting 1.39 million articles requires over 400 core-
 using two Intel Xeon E5-2600 CPUs.
 
 **Bulk PDF conversion for plain PDFs, e.g. downdloaded from Kaggle (Google Cloud)**
-Downloading from AWS are `.tar` files. If plains PDFs are available, such as the case for 
-downloading from Kaggle, add an optional argument `--PLAIN_PDFS TRUE`:
+Downloading from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from Kaggle, use the optional argument `--PLAIN_PDFS TRUE`:
 ```
 python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
-PDFS in `$ARXIV_DATA/tarpdfs` will be converted and the text files are store in `$ARXIV_DATA/fulltext`,
+PDFs in `$ARXIV_DATA/tarpdfs` will be converted and the text files are store in `$ARXIV_DATA/fulltext`,
 keeping the file structure like on arXiv servers intact.
 
 ## Cocitation network
