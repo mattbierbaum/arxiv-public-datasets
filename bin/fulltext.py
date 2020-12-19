@@ -2,7 +2,7 @@ import os
 import multiprocessing
 from argparse import ArgumentParser
 from arxiv_public_data.fulltext import convert_directory_parallel
-from arxiv_public_data.config import DIR_BASE, DIR_FULLTEXT, DIR_PDFTARS, DIR_OUTPUT
+from arxiv_public_data.config import DIR_BASE, DIR_FULLTEXT, DIR_OUTPUT
 from arxiv_public_data import s3_bulk_download
 from arxiv_public_data.s3_bulk_download import call
 
