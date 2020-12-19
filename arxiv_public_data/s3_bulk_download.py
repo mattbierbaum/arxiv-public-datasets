@@ -193,7 +193,7 @@ def download_check_tarfiles(list_of_fileinfo, dryrun=False):
     for fileinfo in list_of_fileinfo:
         download_check_tarfile(fileinfo['filename'], fileinfo['md5sum'], dryrun=dryrun)
 
-def _call(cmd, dryrun=False, debug=False):
+def call(cmd, dryrun=False, debug=False):
     """ Spawn a subprocess and execute the string in cmd """
     if dryrun:
         logger.info(cmd)
