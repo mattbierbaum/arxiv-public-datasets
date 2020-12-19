@@ -118,6 +118,7 @@ in the directory specified in `config.json`:
     python bin/pdfdownload.py [OPTIONAL manifest_file.json.gz]
 
 ## Plain text
+The tool work for both AWS download (`.tar` files) and Kaggle download (plain PDFs), by changing `--PLAIN_PDFS` option.
 ```
 python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS [OPTIONAL if plain PDFs are dowloaded, default FALSE]
 ```
@@ -135,7 +136,7 @@ using two Intel Xeon E5-2600 CPUs.
 
 **Bulk PDF conversion for plain PDFs, e.g. downdloaded from Kaggle (Google Cloud)**
 
-Downloading from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from Kaggle, use the optional argument `--PLAIN_PDFS TRUE`:
+Download from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from Kaggle, use the optional argument `--PLAIN_PDFS TRUE`:
 ```
 python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
