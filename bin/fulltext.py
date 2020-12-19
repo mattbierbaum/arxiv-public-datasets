@@ -16,11 +16,13 @@ if __name__ == '__main__':
                         help="OPTIONAL if plain pdfs are available in " + DIR_BASE + " (e.g. download from Kaggle), "
                                                                                      "default False")
     args = parser.parse_args()
-    if not args.PLAIN_PDFS:
-        manifest = s3_bulk_download.get_manifest()
-        s3_bulk_download.process_manifest_files(manifest, processes=args.N)
+
+    if not args.PLAIN_PDFS:  # Convert Amazon S3 download files
+        manifest = s3_bulk_download.get_manifest()  # Download if not already
+        s3_bulk_download.process_manifest_files(manifest, processes=args.N)  # Convert to txt and move to DIR_FULLTEXT
     else:
-        convert_directory_parallel(DIR_BASE, processes=args.N)
+        convert_directory_parallel(DIR_BASE, processes=args.N)  # Convert directory of plain PDFs file
+        #  Subprocesss to move the converted text files inside DIR_FULLTEXT, recursively
         call('rsync -rv --remove-source-files --prune-empty-dirs --include="*.txt" --exclude="*.pdf" '
              '--exclude="{}" --exclude="{}" {} {} '.format(os.path.basename(DIR_FULLTEXT),
                                                            os.path.basename(DIR_OUTPUT),
