@@ -137,8 +137,8 @@ downloading from Kaggle, add an optional argument `--PLAIN_PDFS TRUE`:
 ```
 python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
-All PDFS in `$ARXIV_DATA/tarpdfs` will be converted and the text files are store in `$ARXIV_DATA/fulltext`
-in the original file structure. 
+PDFS in `$ARXIV_DATA/tarpdfs` will be converted and the text files are store in `$ARXIV_DATA/fulltext`,
+keeping the file structure like on arXiv servers intact.
 
 ## Cocitation network
 
