@@ -138,7 +138,7 @@ using two Intel Xeon E5-2600 CPUs.
 
 Download from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from Kaggle, use the optional argument `--PLAIN_PDFS TRUE`:
 ```
-python bin/convert_directory.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
+python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS TRUE
 ```
 
 ## Cocitation network
