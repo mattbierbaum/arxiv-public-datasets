@@ -12,7 +12,7 @@ if __name__ == '__main__':
     files""")
     parser.add_argument("-N", type=int, default=multiprocessing.cpu_count(), help="OPTIONAL number of CPUs, default "
                                                                                   "all available")
-    parser.add_argument("--PLAIN_PDFS", type=bool, default=False,
+    parser.add_argument("--PLAIN_PDFS", action="store_true",
                         help="OPTIONAL if plain pdfs are available in " + DIR_BASE + " (e.g. download from Kaggle), "
                                                                                      "default False")
     args = parser.parse_args()
