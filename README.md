@@ -120,7 +120,7 @@ in the directory specified in `config.json`:
 ## Plain text
 The tool works for both AWS download (`.tar` files) and Kaggle download (plain PDFs) by adding `--PLAIN_PDFS` optional argument.
 ```
-python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS [OPTIONAL if plain PDFs are dowloaded, default FALSE]
+python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS [OPTIONAL, use if plain PDFs are dowloaded]
 ```
 **Bulk PDF conversion for AWS download**
 
