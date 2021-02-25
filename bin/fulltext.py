@@ -20,9 +20,9 @@ if __name__ == '__main__':
         manifest = s3_bulk_download.get_manifest()  # Download if not already
         s3_bulk_download.process_manifest_files(manifest, processes=args.N)  # Convert to txt and move to DIR_FULLTEXT
     else:
-        convert_directory_parallel(DIR_BASE, processes=args.N)  # Convert directory of plain PDFs file
+        convert_directory_parallel(DIR_PDFTARS, processes=args.N)  # Convert directory of plain PDFs file
         #  Subprocesss to move the converted text files inside DIR_FULLTEXT, recursively
         call('rsync -rv --remove-source-files --prune-empty-dirs --include="*.txt" --exclude="*.pdf" '
              '--exclude="{}" --exclude="{}" {} {} '.format(os.path.basename(DIR_FULLTEXT),
                                                            os.path.basename(DIR_OUTPUT),
-                                                           DIR_BASE + os.sep, DIR_FULLTEXT), 0)
+                                                           DIR_PDFTARS + os.sep, DIR_FULLTEXT), 0)
