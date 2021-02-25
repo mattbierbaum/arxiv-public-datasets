@@ -2,7 +2,7 @@ import os
 import multiprocessing
 from argparse import ArgumentParser
 from arxiv_public_data.fulltext import convert_directory_parallel
-from arxiv_public_data.config import DIR_BASE, DIR_FULLTEXT, DIR_OUTPUT
+from arxiv_public_data.config import DIR_BASE, DIR_FULLTEXT, DIR_OUTPUT, DIR_PDFTARS
 from arxiv_public_data import s3_bulk_download
 from arxiv_public_data.s3_bulk_download import call
 
@@ -13,8 +13,7 @@ if __name__ == '__main__':
     parser.add_argument("-N", type=int, default=multiprocessing.cpu_count(), help="OPTIONAL number of CPUs, default "
                                                                                   "all available")
     parser.add_argument("--PLAIN_PDFS", action="store_true",
-                        help="OPTIONAL if plain pdfs are available in " + DIR_BASE + " (e.g. download from Kaggle), "
-                                                                                     "default False")
+                        help="OPTIONAL, add this if plain pdfs are available in " + DIR_PDFTARS)
     args = parser.parse_args()
 
     if not args.PLAIN_PDFS:  # Convert Amazon S3 download files
