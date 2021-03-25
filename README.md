@@ -95,7 +95,7 @@ gzip-compressed JSON entries. The default save location is
 least 6 hours, as the OAI server only sends 1000 entries every 15 seconds. A
 resumption token is saved, so the process can be restarted by running again.
 
-## PDFs
+## PDFs (AWS download only)
 
 **Prepare credentials**
 
@@ -118,18 +118,28 @@ in the directory specified in `config.json`:
     python bin/pdfdownload.py [OPTIONAL manifest_file.json.gz]
 
 ## Plain text
-
-**Bulk PDF conversion**
+The tool works for both AWS download (`.tar` files) and Kaggle download (plain PDFs) by adding `--PLAIN_PDFS` optional argument.
+```
+python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS [OPTIONAL, use if plain PDFs are dowloaded]
+```
+**Bulk PDF conversion for AWS download**
 
 To use our tool for text conversion of all the PDFs from the ArXiv bulk download
 described above, execute the following. NOTE: if you have not already downloaded
 the PDFs, this tool will do so. If you have downloaded them, be sure to not change
 the `$ARXIV_DATA` so that it will not re-download the tars.
 
-    python bin/fulltext.py [OPTIONAL number_of_processes, default cpu_count]
+    python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] 
 
 At the time of writing, converting 1.39 million articles requires over 400 core-hours
 using two Intel Xeon E5-2600 CPUs.
+
+**Bulk PDF conversion for plain PDFs, e.g. downdloaded from Kaggle (Google Cloud)**
+
+Download from AWS are `.tar` files. If plains PDFs are downloaded, e.g. from Kaggle, use the optional argument `--PLAIN_PDFS`:
+```
+python bin/fulltext.py -N [OPTIONAL number_of_processes, default cpu_count] --PLAIN_PDFS
+```
 
 ## Cocitation network
 
