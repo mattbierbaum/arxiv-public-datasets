@@ -94,6 +94,16 @@ def _record_element_all(elm, name):
     """ XML helper function for extracting text from queries with multiple nodes """
     return elm.findall('arXiv:{}'.format(name), OAI_XML_NAMESPACES)
 
+
+def _record_subelement_text(elm, name, subname):
+    """XML helper function for extracting text from queries with multiple sub-nodes"""
+    return [
+        subnode.text
+        for node in elm.findall("arXiv:{}".format(name), OAI_XML_NAMESPACES)
+        for subnode in node.findall("arXiv:{}".format(subname), OAI_XML_NAMESPACES)
+    ]
+
+
 def parse_record(elm):
     """
     Parse the XML element of a single ArXiv article into a dictionary of
@@ -122,6 +132,7 @@ def parse_record(elm):
     output['versions'] = [
         i.attrib['version'] for i in _record_element_all(elm, 'version')
     ]
+    output["versions_dates"] = _record_subelement_text(elm, "version", "date")
     return output
 
 def parse_xml_listrecords(root):
