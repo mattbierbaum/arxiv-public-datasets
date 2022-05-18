@@ -166,7 +166,7 @@ def fulltext(pdffile: str, timelimit: int = TIMELIMIT):
     try:
         output = run_pdftotext(pdffile, timelimit=timelimit)
         #output = run_pdf2txt(pdffile, timelimit=timelimit)
-    except (TimeoutExpired, CalledProcessError, RuntimeError) as e:
+    except (TimeoutExpired, CalledProcessError, RuntimeError, OSError) as e:
         output = run_pdf2txt(pdffile, timelimit=timelimit)
         #output = run_pdftotext(pdffile, timelimit=timelimit)
 
