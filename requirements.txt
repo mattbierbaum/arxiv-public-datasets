@@ -1,5 +1,5 @@
 boto3==1.9.118
-requests==2.20.0
+requests==2.31.0
 unicodedata2==11.0.0
 https://github.com/jaepil/pdfminer3k/archive/1.0.4.zip
 pdfminer.six
